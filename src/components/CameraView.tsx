@@ -71,6 +71,8 @@ export default function CameraView({
   const [error, setError] = useState<string | null>(null);
   const [isHandDetected, setIsHandDetected] = useState(false);
   const [showLandmarks, setShowLandmarks] = useState(true);
+  const showLandmarksRef = useRef(true);
+  useEffect(() => { showLandmarksRef.current = showLandmarks; }, [showLandmarks]);
 
   // Feature-based movement tracking (for movement type detection)
   const movementFeatureFramesRef = useRef<FeatureVector[]>([]);
@@ -201,7 +203,7 @@ export default function CameraView({
           }
 
           // Draw hand skeleton (only if landmarks toggle is on)
-          if (showCanvas && showLandmarks && window.drawConnectors && window.drawLandmarks) {
+          if (showCanvas && showLandmarksRef.current && window.drawConnectors && window.drawLandmarks) {
             const mirroredLandmarks = landmarks.map((lm) => ({
               x: 1 - lm.x,
               y: lm.y,
