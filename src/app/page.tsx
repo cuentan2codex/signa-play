@@ -139,7 +139,7 @@ export default function Home() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="mt-10 grid grid-cols-2 gap-4"
+                  className="mt-10"
                 >
                   <Card className="p-4">
                     <div className="flex items-center gap-2 mb-1">
@@ -149,15 +149,6 @@ export default function Home() {
                       <span className="text-xs text-muted-foreground">Puntaje total</span>
                     </div>
                     <div className="text-2xl font-bold">{totalScore}</div>
-                  </Card>
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-                      </svg>
-                      <span className="text-xs text-muted-foreground">Señas guardadas</span>
-                    </div>
-                    <div className="text-2xl font-bold">{savedPosesCount}</div>
                   </Card>
                 </motion.div>
               </div>
