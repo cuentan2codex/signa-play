@@ -10,7 +10,7 @@ import GameMode from '@/components/GameMode';
 import TrainingMode from '@/components/TrainingMode';
 import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
-import { loadScore, loadProgress, loadPosesFromStorage, savePosesToStorage, SavedPose } from '@/lib/gameData';
+import { loadScore, loadProgress, loadPosesFromStorage, savePosesToStorage, SavedPose } from '@/lib/gestureEngine';
 
 // Default poses for common letters (pre-trained basic ASL-like gestures)
 const DEFAULT_POSES: Record<string, SavedPose> = {};

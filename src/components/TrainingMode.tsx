@@ -7,13 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CameraView from './CameraView';
 import { HandLandmark, FeatureVector, SavedPose } from '@/lib/types';
-import {
-  loadPosesFromStorage,
-  savePoseToStorage,
-  deletePoseFromStorage,
-  MOVEMENT_LETTERS,
-} from '@/lib/gameData';
-import { detectMovement } from '@/lib/gestureEngine';
+import { MOVEMENT_LETTERS } from '@/lib/gameData';
+import { loadPosesFromStorage, savePoseToStorage, deletePoseFromStorage, detectMovement } from '@/lib/gestureEngine';
 
 interface TrainingModeProps {
   onBack: () => void;

@@ -7,17 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import CameraView from './CameraView';
 import { HandLandmark, FeatureVector, SavedPose } from '@/lib/types';
-import {
-  loadPosesFromStorage,
-  saveScore,
-  loadScore,
-  loadProgress,
-  saveProgress,
-  LevelProgress,
-  getLetters,
-  LEVELS,
-  MOVEMENT_LETTERS,
-} from '@/lib/gameData';
+import { getLetters, LEVELS, MOVEMENT_LETTERS } from '@/lib/gameData';
+import { loadPosesFromStorage, saveScore, loadScore, loadProgress, saveProgress, LevelProgress } from '@/lib/gestureEngine';
 
 interface GameModeProps {
   levelId: number;
