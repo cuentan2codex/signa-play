@@ -435,6 +435,12 @@ export function deletePoseFromStorage(letter: string): void {
   savePosesToStorage(poses);
 }
 
+export function deleteAllPosesFromStorage(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
 // Score management
 const SCORE_KEY = 'sign-language-score';
 

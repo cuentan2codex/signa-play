@@ -12,10 +12,22 @@ import {
   loadPosesFromStorage,
   savePoseToStorage,
   deletePoseFromStorage,
+  deleteAllPosesFromStorage,
   getLetterConfidence,
   comparePoses,
   normalizeLandmarks,
 } from '@/lib/gestureEngine';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface TrainingModeProps {
   onBack: () => void;
@@ -35,6 +47,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [currentLandmarks, setCurrentLandmarks] = useState<HandLandmark[]>([]);
   // Real-time confidence against selected letter
   const [liveConfidence, setLiveConfidence] = useState(0);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const recordingRef = useRef<HandLandmark[][]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -176,6 +189,15 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     setLiveConfidence(0);
   };
 
+  // Delete ALL samples from ALL letters
+  const deleteAllGlobalSamples = () => {
+    deleteAllPosesFromStorage();
+    refreshPoses();
+    setCurrentLandmarks([]);
+    setLiveConfidence(0);
+    setShowDeleteAllDialog(false);
+  };
+
   const isMovementLetter = !!MOVEMENT_LETTERS[selectedLetter];
   const savedPose = savedPoses[selectedLetter];
   const hasPose = !!savedPose;
@@ -209,7 +231,38 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
             Volver
           </Button>
           <h1 className="text-lg font-bold text-purple-800">Modo Entrenamiento</h1>
-          <div className="w-20" />
+          <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-1.5 text-xs"
+                disabled={Object.keys(savedPoses).length === 0}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Borrar todo
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Eliminar todas las muestras</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se eliminarán todas las muestras de todas las letras ({Object.keys(savedPoses).length} letras con datos). Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={deleteAllGlobalSamples}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Sí, eliminar todo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 
