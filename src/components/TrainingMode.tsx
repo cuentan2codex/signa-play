@@ -8,7 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import CameraView from './CameraView';
 import { HandLandmark, FeatureVector, SavedPose, MovementType } from '@/lib/types';
 import { MOVEMENT_LETTERS } from '@/lib/gameData';
-import { loadPosesFromStorage, savePoseToStorage, deletePoseFromStorage, detectMovement } from '@/lib/gestureEngine';
+import {
+  loadPosesFromStorage,
+  savePoseToStorage,
+  deletePoseFromStorage,
+  getLetterConfidence,
+  comparePoses,
+  normalizeLandmarks,
+} from '@/lib/gestureEngine';
 
 interface TrainingModeProps {
   onBack: () => void;
@@ -22,18 +29,18 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureCountdown, setCaptureCountdown] = useState<number | null>(null);
   const [isRecordingMovement, setIsRecordingMovement] = useState(false);
-  const [recordedFrames, setRecordedFrames] = useState<FeatureVector[]>([]);
-  const [movementType, setMovementType] = useState<MovementType>('none');
+  const [recordedFrameCount, setRecordedFrameCount] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
   const [showSuccess, setShowSuccess] = useState<string | null>(null);
   const [currentLandmarks, setCurrentLandmarks] = useState<HandLandmark[]>([]);
-  const [currentFeatures, setCurrentFeatures] = useState<FeatureVector | null>(null);
-  const recordingRef = useRef<FeatureVector[]>([]);
+  // Real-time confidence against selected letter
+  const [liveConfidence, setLiveConfidence] = useState(0);
+
+  const recordingRef = useRef<HandLandmark[][]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Safe: loadPosesFromStorage checks typeof window
     setSavedPoses(loadPosesFromStorage());
   }, []);
 
@@ -41,29 +48,40 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     setSavedPoses(loadPosesFromStorage());
   }, []);
 
+  // Handle landmarks: update live confidence
   const handleLandmarks = useCallback(
-    (landmarks: HandLandmark[], features: FeatureVector) => {
+    (landmarks: HandLandmark[], _features: FeatureVector) => {
       setCurrentLandmarks(landmarks);
-      setCurrentFeatures(features);
 
+      // Record movement frames if recording
       if (isRecordingMovement) {
-        recordingRef.current.push(features);
-        setRecordedFrames([...recordingRef.current]);
+        recordingRef.current.push([...landmarks]);
+        setRecordedFrameCount(recordingRef.current.length);
+      }
+
+      // Calculate live confidence against selected letter
+      if (landmarks.length === 21) {
+        const conf = getLetterConfidence(landmarks, selectedLetter, savedPoses);
+        setLiveConfidence(Math.round(conf * 100));
       }
     },
-    [isRecordingMovement]
+    [isRecordingMovement, selectedLetter, savedPoses]
   );
 
-  // Capture a static pose
+  // Capture a static pose sample (adds to existing samples)
   const capturePose = () => {
-    if (!currentFeatures || !currentLandmarks.length) return;
+    if (!currentLandmarks.length || currentLandmarks.length !== 21) return;
+
+    const existing = savedPoses[selectedLetter];
+    const newSamples = existing
+      ? [...existing.samples, [...currentLandmarks]]
+      : [[...currentLandmarks]];
 
     const pose: SavedPose = {
       letter: selectedLetter,
-      features: currentFeatures,
-      landmarks: currentLandmarks,
+      samples: newSamples,
       isMovement: false,
-      createdAt: Date.now(),
+      createdAt: existing?.createdAt || Date.now(),
     };
 
     savePoseToStorage(pose);
@@ -90,10 +108,10 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     }, 1000);
   };
 
-  // Start recording movement
+  // Start recording movement (raw landmarks per frame)
   const startMovementRecording = () => {
     recordingRef.current = [];
-    setRecordedFrames([]);
+    setRecordedFrameCount(0);
     setIsRecordingMovement(true);
   };
 
@@ -101,45 +119,19 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const stopMovementRecording = () => {
     setIsRecordingMovement(false);
 
-    if (recordingRef.current.length >= 5) {
-      const detectedMovement = detectMovement(recordingRef.current) as MovementType;
-      setMovementType(detectedMovement);
-
-      // Save the average features as the base pose + movement info
-      const avgFeatures = recordingRef.current.reduce(
-        (acc, f) => ({
-          thumb: acc.thumb + f.thumb,
-          index: acc.index + f.index,
-          middle: acc.middle + f.middle,
-          ring: acc.ring + f.ring,
-          pinky: acc.pinky + f.pinky,
-          thumbAngle: acc.thumbAngle + f.thumbAngle,
-          indexAngle: acc.indexAngle + f.indexAngle,
-          wristHeight: acc.wristHeight + f.wristHeight,
-        }),
-        { thumb: 0, index: 0, middle: 0, ring: 0, pinky: 0, thumbAngle: 0, indexAngle: 0, wristHeight: 0 }
-      );
-
-      const n = recordingRef.current.length;
-      const normalizedFeatures: FeatureVector = {
-        thumb: avgFeatures.thumb / n,
-        index: avgFeatures.index / n,
-        middle: avgFeatures.middle / n,
-        ring: avgFeatures.ring / n,
-        pinky: avgFeatures.pinky / n,
-        thumbAngle: avgFeatures.thumbAngle / n,
-        indexAngle: avgFeatures.indexAngle / n,
-        wristHeight: avgFeatures.wristHeight / n,
-      };
+    if (recordingRef.current.length >= 8) {
+      const existing = savedPoses[selectedLetter];
+      const newMovementSamples = existing?.movementSamples
+        ? [...existing.movementSamples, recordingRef.current]
+        : [recordingRef.current];
 
       const pose: SavedPose = {
         letter: selectedLetter,
-        features: normalizedFeatures,
-        landmarks: currentLandmarks,
+        samples: existing?.samples || [],
         isMovement: true,
-        movementType: detectedMovement,
-        movementFrames: recordingRef.current,
-        createdAt: Date.now(),
+        movementType: MOVEMENT_LETTERS[selectedLetter]?.type as any,
+        movementSamples: newMovementSamples,
+        createdAt: existing?.createdAt || Date.now(),
       };
 
       savePoseToStorage(pose);
@@ -147,23 +139,63 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
       setShowSuccess(selectedLetter);
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
       successTimeoutRef.current = setTimeout(() => setShowSuccess(null), 2000);
-    } else {
-      setMovementType('none');
     }
   };
 
-  const deletePose = (letter: string) => {
-    deletePoseFromStorage(letter);
-    refreshPoses();
-    if (letter === selectedLetter) {
-      setCurrentFeatures(null);
-      setCurrentLandmarks([]);
+  // Delete last sample for selected letter
+  const deleteLastSample = () => {
+    const pose = savedPoses[selectedLetter];
+    if (!pose) return;
+
+    if (pose.isMovement && pose.movementSamples && pose.movementSamples.length > 0) {
+      const updated = { ...pose, movementSamples: pose.movementSamples.slice(0, -1) };
+      if (updated.movementSamples.length === 0) {
+        deletePoseFromStorage(selectedLetter);
+        setSavedPoses(loadPosesFromStorage());
+      } else {
+        savePoseToStorage(updated);
+        refreshPoses();
+      }
+    } else if (pose.samples.length > 0) {
+      const updated = { ...pose, samples: pose.samples.slice(0, -1) };
+      if (updated.samples.length === 0) {
+        deletePoseFromStorage(selectedLetter);
+        setSavedPoses(loadPosesFromStorage());
+      } else {
+        savePoseToStorage(updated);
+        refreshPoses();
+      }
     }
+  };
+
+  // Delete all samples for selected letter
+  const deleteAllSamples = () => {
+    deletePoseFromStorage(selectedLetter);
+    refreshPoses();
+    setCurrentLandmarks([]);
+    setLiveConfidence(0);
   };
 
   const isMovementLetter = !!MOVEMENT_LETTERS[selectedLetter];
-  const hasPose = !!savedPoses[selectedLetter];
   const savedPose = savedPoses[selectedLetter];
+  const hasPose = !!savedPose;
+  const sampleCount = savedPose
+    ? savedPose.isMovement
+      ? savedPose.movementSamples?.length || 0
+      : savedPose.samples.length
+    : 0;
+
+  const getConfidenceColor = (val: number) => {
+    if (val >= 70) return 'text-green-500';
+    if (val >= 45) return 'text-yellow-500';
+    return 'text-red-400';
+  };
+
+  const getConfidenceBarColor = (val: number) => {
+    if (val >= 70) return 'bg-green-500';
+    if (val >= 45) return 'bg-yellow-500';
+    return 'bg-red-400';
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 to-violet-50">
@@ -214,7 +246,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
               <div className="absolute top-3 right-3 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm rounded-full px-3 py-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
                 <span className="text-white text-xs font-medium">
-                  Grabando... {recordedFrames.length} frames
+                  Grabando... {recordedFrameCount} frames
                 </span>
               </div>
             )}
@@ -233,8 +265,9 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                     <p className="text-white text-lg font-bold">
-                      Seña guardada: {showSuccess}
+                      Muestra guardada: {showSuccess}
                     </p>
+                    <p className="text-white/80 text-sm">({sampleCount} {sampleCount === 1 ? 'muestra' : 'muestras'} total)</p>
                   </div>
                 </motion.div>
               )}
@@ -253,23 +286,21 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                   {captureCountdown !== null
                     ? `Capturando en ${captureCountdown}...`
                     : currentLandmarks.length
-                      ? 'Capturar Seña Estática'
+                      ? `Capturar muestra (${sampleCount + 1})`
                       : 'Muestra tu mano'}
                 </Button>
               )}
               {isMovementLetter && (
-                <>
-                  <Button
-                    onClick={isRecordingMovement ? stopMovementRecording : startMovementRecording}
-                    disabled={!cameraReady || !currentLandmarks.length}
-                    variant={isRecordingMovement ? 'destructive' : 'default'}
-                    className={`flex-1 ${!isRecordingMovement ? 'bg-purple-500 hover:bg-purple-600' : ''}`}
-                  >
-                    {isRecordingMovement
-                      ? 'Detener Grabación'
-                      : 'Grabar Movimiento'}
-                  </Button>
-                </>
+                <Button
+                  onClick={isRecordingMovement ? stopMovementRecording : startMovementRecording}
+                  disabled={!cameraReady || !currentLandmarks.length}
+                  variant={isRecordingMovement ? 'destructive' : 'default'}
+                  className={`flex-1 ${!isRecordingMovement ? 'bg-purple-500 hover:bg-purple-600' : ''}`}
+                >
+                  {isRecordingMovement
+                    ? `Detener (${recordedFrameCount} frames)`
+                    : `Grabar movimiento (${sampleCount + 1})`}
+                </Button>
               )}
             </div>
 
@@ -282,41 +313,85 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
             )}
 
             {/* Recording progress */}
-            {isRecordingMovement && recordedFrames.length > 0 && (
+            {isRecordingMovement && recordedFrameCount > 0 && (
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Frames grabados</span>
-                  <span>{recordedFrames.length}</span>
+                  <span>{recordedFrameCount}</span>
                 </div>
                 <div className="w-full bg-purple-100 rounded-full h-2">
                   <div
                     className="bg-purple-500 h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (recordedFrames.length / 30) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (recordedFrameCount / 30) * 100)}%` }}
                   />
                 </div>
                 <p className="text-xs text-purple-500 mt-1">
-                  {recordedFrames.length < 10
+                  {recordedFrameCount < 10
                     ? 'Sigue moviendo la mano...'
-                    : recordedFrames.length < 20
+                    : recordedFrameCount < 20
                       ? 'Bien, sigue un poco más...'
-                      : '¡Excelente! Puedes detener cuando quieras'}
+                      : 'Excelente! Puedes detener cuando quieras'}
                 </p>
               </div>
             )}
           </Card>
+
+          {/* ====== LIVE CONFIDENCE PANEL ====== */}
+          {currentLandmarks.length === 21 && (
+            <Card className="p-4 border-2 border-purple-200">
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 font-bold">
+                Prueba en vivo
+              </h4>
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl font-bold ${
+                  liveConfidence >= 70
+                    ? 'bg-green-100 text-green-700'
+                    : liveConfidence >= 45
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-red-100 text-red-500'
+                }`}>
+                  {liveConfidence}%
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Coincidencia con &quot;{selectedLetter}&quot;</span>
+                    <span className={`font-bold ${getConfidenceColor(liveConfidence)}`}>
+                      {liveConfidence >= 70 ? 'Excelente' : liveConfidence >= 45 ? 'Buena' : 'Baja'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-150 ${getConfidenceBarColor(liveConfidence)}`}
+                      style={{ width: `${liveConfidence}%` }}
+                    />
+                  </div>
+                  {sampleCount > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Comparando contra {sampleCount} {sampleCount === 1 ? 'muestra guardada' : 'muestras guardadas'}
+                    </p>
+                  )}
+                  {sampleCount === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Captura al menos una muestra para ver la coincidencia
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Right: Alphabet and pose info */}
         <div className="lg:w-96 flex flex-col gap-4">
           {/* Selected letter info */}
-          <Card className="p-6 bg-gradient-to-br from-purple-500 to-violet-500 text-white">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-5 bg-gradient-to-br from-purple-500 to-violet-500 text-white">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs uppercase tracking-wider opacity-80">
                 Letra seleccionada
               </h3>
               {hasPose && (
                 <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                  {savedPose?.isMovement ? 'Con movimiento' : 'Estática'}
+                  {savedPose?.isMovement ? 'Con movimiento' : 'Estática'} · {sampleCount} {sampleCount === 1 ? 'muestra' : 'muestras'}
                 </Badge>
               )}
             </div>
@@ -324,45 +399,43 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
               key={selectedLetter}
               initial={{ rotateY: -90, opacity: 0 }}
               animate={{ rotateY: 0, opacity: 1 }}
-              className="text-7xl font-bold text-center py-4"
+              className="text-7xl font-bold text-center py-3"
             >
               {selectedLetter}
             </motion.div>
             {hasPose && savedPose?.isMovement && (
-              <p className="text-center text-sm opacity-80 mt-2">
+              <p className="text-center text-sm opacity-80 mt-1">
                 Movimiento: {savedPose?.movementType}
               </p>
             )}
-            {hasPose && (
+            {sampleCount > 0 && (
               <p className="text-center text-xs opacity-60 mt-1">
-                Guardada el {new Date(savedPose!.createdAt).toLocaleDateString('es')}
+                {sampleCount >= 5 ? 'Excelente cobertura' : sampleCount >= 3 ? 'Buena cobertura' : 'Agrega más muestras para mejorar precisión'}
               </p>
             )}
           </Card>
 
-          {/* Current features preview */}
-          {currentFeatures && currentLandmarks.length > 0 && (
-            <Card className="p-4">
-              <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-                Pose detectada en tiempo real
-              </h4>
-              <div className="grid grid-cols-5 gap-2">
-                {(['thumb', 'index', 'middle', 'ring', 'pinky'] as const).map((finger) => (
-                  <div key={finger} className="text-center">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        currentFeatures[finger] > 0.5
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {currentFeatures[finger] > 0.5 ? '↑' : '↓'}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground mt-1 capitalize">
-                      {finger === 'thumb' ? 'Pulgar' : finger === 'index' ? 'Índice' : finger === 'middle' ? 'Medio' : finger === 'ring' ? 'Anular' : 'Meñique'}
-                    </div>
-                  </div>
-                ))}
+          {/* Sample actions */}
+          {hasPose && (
+            <Card className="p-3">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={deleteLastSample}
+                  className="flex-1"
+                  disabled={sampleCount <= 0}
+                >
+                  Borrar última muestra
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={deleteAllSamples}
+                  className="flex-1"
+                >
+                  Borrar todo ({selectedLetter})
+                </Button>
               </div>
             </Card>
           )}
@@ -372,12 +445,18 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
             <h4 className="text-sm font-semibold text-muted-foreground mb-3">
               Alfabeto
               <span className="ml-2 text-xs font-normal">
-                ({Object.keys(savedPoses).length}/{ALPHABET.length} señas guardadas)
+                ({Object.keys(savedPoses).length}/{ALPHABET.length} letras entrenadas)
               </span>
             </h4>
             <div className="grid grid-cols-7 gap-1.5">
               {ALPHABET.map((letter) => {
-                const hasSavedPose = !!savedPoses[letter];
+                const pose = savedPoses[letter];
+                const count = pose
+                  ? pose.isMovement
+                    ? pose.movementSamples?.length || 0
+                    : pose.samples.length
+                  : 0;
+                const hasSavedPose = count > 0;
                 const isMovement = !!MOVEMENT_LETTERS[letter];
                 const isSelected = letter === selectedLetter;
 
@@ -388,11 +467,11 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => {
                       setSelectedLetter(letter);
-                      setRecordedFrames([]);
-                      setMovementType('none');
+                      setRecordedFrameCount(0);
                       setIsRecordingMovement(false);
+                      setLiveConfidence(0);
                     }}
-                    className={`relative w-full aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all ${
+                    className={`relative w-full aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-bold transition-all ${
                       isSelected
                         ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                         : hasSavedPose
@@ -401,11 +480,14 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                     }`}
                   >
                     {letter}
-                    {hasSavedPose && !isSelected && (
-                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-white" />
+                    {count > 0 && !isSelected && (
+                      <span className="text-[9px] leading-none mt-0.5 opacity-70">{count}</span>
+                    )}
+                    {isSelected && count > 0 && (
+                      <span className="text-[9px] leading-none mt-0.5 opacity-80">{count}</span>
                     )}
                     {isMovement && (
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${isSelected ? 'bg-amber-300' : 'bg-amber-400'}`} title="Letra con movimiento" />
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${isSelected ? 'bg-amber-300' : 'bg-amber-400'}`} />
                     )}
                   </motion.button>
                 );
@@ -415,8 +497,8 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
             {/* Legend */}
             <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-green-400" />
-                Guardada
+                <div className="w-2 h-2 rounded-full bg-purple-500" />
+                Entrenada (el número = muestras)
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-amber-400" />
@@ -425,29 +507,16 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
             </div>
           </Card>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            {hasPose && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => deletePose(selectedLetter)}
-                className="flex-1"
-              >
-                Eliminar seña de {selectedLetter}
-              </Button>
-            )}
-          </div>
-
           {/* Tips */}
           <Card className="p-4 bg-amber-50 border-amber-200">
             <h4 className="text-sm font-semibold text-amber-800 mb-2">Consejos</h4>
             <ul className="text-xs text-amber-700 space-y-1.5">
+              <li>• <strong>Captura varias muestras</strong> de la misma letra (3-5 recomendado)</li>
+              <li>• Variá ligeramente la posición entre cada captura</li>
               <li>• Mantén la mano centrada en la cámara</li>
               <li>• Usa buena iluminación para mejor detección</li>
-              <li>• Para señas estáticas, mantén la pose firme 3 segundos</li>
-              <li>• Para letras con movimiento (J, Z), haz el gesto completo</li>
-              <li>• Guarda varias veces para mejorar la precisión</li>
+              <li>• Para letras con movimiento (J, Z), grabá el gesto completo</li>
+              <li>• Verificá la coincidencia en vivo antes de jugar</li>
             </ul>
           </Card>
         </div>

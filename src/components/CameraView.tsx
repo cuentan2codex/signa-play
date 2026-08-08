@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { HandLandmark, FeatureVector } from '@/lib/types';
 import { extractFeatures, detectMovement } from '@/lib/gestureEngine';
 
@@ -32,27 +32,25 @@ declare global {
 }
 
 interface CameraViewProps {
-  onGestureDetected?: (letter: string, confidence: number) => void;
   onLandmarksDetected?: (landmarks: HandLandmark[], features: FeatureVector) => void;
-  onMovementDetected?: (movementType: string) => void;
+  onMovementHistory?: (frames: HandLandmark[][]) => void;
+  onMovementTypeDetected?: (movementType: string) => void;
   isActive?: boolean;
   showCanvas?: boolean;
   onLoadingChange?: (loading: boolean, error?: string) => void;
   onReady?: () => void;
   className?: string;
-  continuousRecognition?: boolean;
 }
 
 export default function CameraView({
-  onGestureDetected,
   onLandmarksDetected,
-  onMovementDetected,
+  onMovementHistory,
+  onMovementTypeDetected,
   isActive = true,
   showCanvas = true,
   onLoadingChange,
   onReady,
   className = '',
-  continuousRecognition = true,
 }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,11 +63,11 @@ export default function CameraView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isHandDetected, setIsHandDetected] = useState(false);
-  const [lastLandmarks, setLastLandmarks] = useState<HandLandmark[]>([]);
-  const movementFramesRef = useRef<FeatureVector[]>([]);
-  const lastGestureRef = useRef<string>('');
-  const gestureStableCountRef = useRef<number>(0);
-  const lastGestureTimeRef = useRef<number>(0);
+
+  // Feature-based movement tracking (for movement type detection)
+  const movementFeatureFramesRef = useRef<FeatureVector[]>([]);
+  // Raw landmark history (for 21-coord movement recognition)
+  const movementLandmarksRef = useRef<HandLandmark[][]>([]);
 
   // Load MediaPipe scripts from CDN
   useEffect(() => {
@@ -81,7 +79,6 @@ export default function CameraView({
 
         for (const src of MEDIAPIPE_SCRIPTS) {
           await new Promise<void>((resolve, reject) => {
-            // Check if already loaded
             const existing = document.querySelector(`script[src="${src}"]`);
             if (existing) {
               resolve();
@@ -98,7 +95,6 @@ export default function CameraView({
 
         if (cancelled) return;
 
-        // Small delay to ensure globals are available
         await new Promise((r) => setTimeout(r, 100));
 
         if (!window.Hands) {
@@ -130,7 +126,7 @@ export default function CameraView({
     if (!isLoaded || !videoRef.current || !isActive) return;
 
     let handsInstance: any = null;
-    let cameraInstance: any = null;
+    let cameraInstance: any;
 
     async function initHands() {
       const video = videoRef.current!;
@@ -151,12 +147,10 @@ export default function CameraView({
       handsInstance.onResults((results: any) => {
         const ctx = canvas.getContext('2d')!;
 
-        // Clear and set canvas size
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw video frame mirrored
         if (showCanvas) {
           ctx.save();
           ctx.scale(-1, 1);
@@ -174,28 +168,32 @@ export default function CameraView({
           );
 
           setIsHandDetected(true);
-          setLastLandmarks(landmarks);
 
           const features = extractFeatures(landmarks);
           onLandmarksDetected?.(landmarks, features);
 
-          // Track movement frames
-          movementFramesRef.current.push(features);
-          if (movementFramesRef.current.length > 30) {
-            movementFramesRef.current.shift();
+          // Track raw landmark history for movement recognition
+          movementLandmarksRef.current.push([...landmarks]);
+          if (movementLandmarksRef.current.length > 40) {
+            movementLandmarksRef.current.shift();
+          }
+          onMovementHistory?.([...movementLandmarksRef.current]);
+
+          // Track feature-based movement for type detection
+          movementFeatureFramesRef.current.push(features);
+          if (movementFeatureFramesRef.current.length > 30) {
+            movementFeatureFramesRef.current.shift();
           }
 
-          // Detect movement
-          if (movementFramesRef.current.length >= 10) {
-            const movement = detectMovement(movementFramesRef.current);
+          if (movementFeatureFramesRef.current.length >= 10) {
+            const movement = detectMovement(movementFeatureFramesRef.current);
             if (movement !== 'none') {
-              onMovementDetected?.(movement);
+              onMovementTypeDetected?.(movement);
             }
           }
 
           // Draw hand skeleton
           if (showCanvas && window.drawConnectors && window.drawLandmarks) {
-            // Mirror the landmarks for drawing
             const mirroredLandmarks = landmarks.map((lm) => ({
               x: 1 - lm.x,
               y: lm.y,
@@ -216,14 +214,14 @@ export default function CameraView({
           }
         } else {
           setIsHandDetected(false);
-          setLastLandmarks([]);
-          movementFramesRef.current = [];
+          movementFeatureFramesRef.current = [];
+          movementLandmarksRef.current = [];
+          onMovementHistory?.([]);
         }
       });
 
       mpHandsRef.current = handsInstance;
 
-      // Request camera
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' },
@@ -238,7 +236,6 @@ export default function CameraView({
           };
         });
 
-        // Process frames
         const processFrame = async () => {
           if (video.readyState >= 2 && handsInstance) {
             await handsInstance.send({ image: video });
@@ -265,32 +262,8 @@ export default function CameraView({
     };
   }, [isLoaded, isActive]);
 
-  // Gesture stabilization: require N consistent detections
-  const handleGestureDetection = useCallback(
-    (letter: string, confidence: number) => {
-      const now = Date.now();
-      if (now - lastGestureTimeRef.current < 1500) return; // Cooldown
-
-      if (letter === lastGestureRef.current) {
-        gestureStableCountRef.current++;
-      } else {
-        lastGestureRef.current = letter;
-        gestureStableCountRef.current = 1;
-      }
-
-      // Require 8 stable frames to confirm gesture
-      if (gestureStableCountRef.current >= 8) {
-        onGestureDetected?.(letter, confidence);
-        lastGestureTimeRef.current = now;
-        gestureStableCountRef.current = 0;
-      }
-    },
-    [onGestureDetected]
-  );
-
   return (
     <div className={`relative overflow-hidden rounded-2xl ${className}`}>
-      {/* Video element (hidden, used by MediaPipe) */}
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover opacity-0"
@@ -299,13 +272,11 @@ export default function CameraView({
         style={{ transform: 'scaleX(-1)' }}
       />
 
-      {/* Canvas for drawing */}
       <canvas
         ref={canvasRef}
         className={`w-full h-full rounded-2xl ${showCanvas ? '' : 'hidden'}`}
       />
 
-      {/* Loading state */}
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-card rounded-2xl">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent mb-4" />
@@ -315,7 +286,6 @@ export default function CameraView({
         </div>
       )}
 
-      {/* Error state */}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-card rounded-2xl p-6">
           <svg className="w-16 h-16 text-destructive mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -328,7 +298,6 @@ export default function CameraView({
         </div>
       )}
 
-      {/* Hand detection indicator */}
       {isLoaded && !error && (
         <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1.5">
           <div
@@ -342,7 +311,6 @@ export default function CameraView({
         </div>
       )}
 
-      {/* No hand detected overlay */}
       {isLoaded && !error && !isHandDetected && !isLoading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-black/40 backdrop-blur-sm rounded-xl px-6 py-4 text-center">

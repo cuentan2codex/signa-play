@@ -19,11 +19,10 @@ export interface FeatureVector {
 
 export interface SavedPose {
   letter: string;
-  features: FeatureVector;
-  landmarks: HandLandmark[];
+  samples: HandLandmark[][]; // Multiple reference captures, each = 21 landmark coordinates
   isMovement: boolean;
   movementType?: 'horizontal' | 'vertical' | 'circular' | 'zigzag';
-  movementFrames?: FeatureVector[];
+  movementSamples?: HandLandmark[][][]; // Multiple movement recordings, each = array of frames (21 landmarks per frame)
   createdAt: number;
 }
 
