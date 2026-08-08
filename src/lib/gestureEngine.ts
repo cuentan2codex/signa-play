@@ -259,26 +259,39 @@ function resampleTrajectory(
 }
 
 /**
- * Compare two trajectories and return similarity 0-1.
- * Both are normalized and resampled to the same length.
+ * Compare two trajectories using sub-sequence DTW-like sliding window.
+ * Finds the best alignment between the live and saved trajectories
+ * for maximum similarity, even at different speeds.
  */
 function compareTrajectories(
   a: { x: number; y: number }[],
   b: { x: number; y: number }[]
 ): number {
-  if (a.length < 3 || b.length < 3) return 0;
-  const n = Math.max(a.length, b.length, 15);
-  const ra = resampleTrajectory(normalizeTrajectory(a), n);
-  const rb = resampleTrajectory(normalizeTrajectory(b), n);
+  if (a.length < 5 || b.length < 5) return 0;
+  const ra = normalizeTrajectory(a);
+  const rb = normalizeTrajectory(b);
+  const n = Math.max(ra.length, rb.length, 20);
+  const sa = resampleTrajectory(ra, n);
+  const sb = resampleTrajectory(rb, n);
 
-  let totalDist = 0;
-  for (let i = 0; i < n; i++) {
-    const dx = ra[i].x - rb[i].x;
-    const dy = ra[i].y - rb[i].y;
-    totalDist += Math.sqrt(dx * dx + dy * dy);
+  // Sliding window: try all possible offsets and keep the best match
+  const windowSize = Math.floor(n * 0.6);
+  let bestDist = Infinity;
+
+  for (let offset = 0; offset <= n - windowSize; offset++) {
+    let dist = 0;
+    for (let i = 0; i < windowSize; i++) {
+      const ai = Math.min(n - 1, offset + Math.floor((i / (windowSize - 1)) * (n - offset - 1)));
+      const bi = Math.min(n - 1, Math.floor((i / (windowSize - 1)) * (n - 1)));
+      const dx = sa[ai].x - sb[bi].x;
+      const dy = sa[ai].y - sb[bi].y;
+      dist += Math.sqrt(dx * dx + dy * dy);
+    }
+    if (dist < bestDist) bestDist = dist;
   }
-  const avg = totalDist / n;
-  return Math.max(0, Math.min(1, 1 - avg * 2));
+
+  const avg = bestDist / windowSize;
+  return Math.max(0, Math.min(1, 1 - avg * 1.8));
 }
 
 /**
