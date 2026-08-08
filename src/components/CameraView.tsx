@@ -142,6 +142,10 @@ export default function CameraView({
       const video = videoRef.current!;
       const canvas = canvasRef.current!;
 
+      // Detect mobile device for optimized settings
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 1 && window.innerWidth < 1024);
+
       handsInstance = new window.Hands({
         locateFile: (file: string) =>
           `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
@@ -149,9 +153,10 @@ export default function CameraView({
 
       handsInstance.setOptions({
         maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.5,
+        modelComplexity: isMobile ? 0 : 1,
+        minDetectionConfidence: isMobile ? 0.5 : 0.7,
+        minTrackingConfidence: isMobile ? 0.4 : 0.5,
+        selfieMode: true,
       });
 
       handsInstance.onResults((results: any) => {
@@ -233,8 +238,25 @@ export default function CameraView({
       mpHandsRef.current = handsInstance;
 
       try {
+        // Mobile-optimized camera constraints
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+          (navigator.maxTouchPoints > 1 && window.innerWidth < 1024);
+
+        const videoConstraints: MediaStreamConstraints['video'] = isMobile
+          ? {
+              facingMode: 'user',
+              width: { ideal: 640, min: 320 },
+              height: { ideal: 480, min: 240 },
+              frameRate: { ideal: 30, max: 30 },
+            }
+          : {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: 'user',
+            };
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: 'user' },
+          video: videoConstraints,
         });
         streamRef.current = stream;
         video.srcObject = stream;
