@@ -173,7 +173,7 @@ export function getMovementLetterConfidence(
 function trimStillFrames(frames: HandLandmark[][]): HandLandmark[][] {
   if (frames.length < 3) return frames;
 
-  const threshold = 0.004;
+  const threshold = 0.002;
   let start = 0;
   let end = frames.length - 1;
 
@@ -215,6 +215,7 @@ function extractTrajectory(frames: HandLandmark[][]): { x: number; y: number }[]
 
 /**
  * Normalize trajectory to a 0-1 bounding box for scale/position invariance.
+ * Uses uniform scaling (max of rx, ry) to preserve the shape's aspect ratio.
  */
 function normalizeTrajectory(
   points: { x: number; y: number }[]
@@ -229,7 +230,10 @@ function normalizeTrajectory(
   }
   const rx = maxX - minX || 1;
   const ry = maxY - minY || 1;
-  return points.map((p) => ({ x: (p.x - minX) / rx, y: (p.y - minY) / ry }));
+  const scale = Math.max(rx, ry);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  return points.map((p) => ({ x: (p.x - cx) / scale, y: (p.y - cy) / scale }));
 }
 
 /**
@@ -274,7 +278,7 @@ function compareTrajectories(
     totalDist += Math.sqrt(dx * dx + dy * dy);
   }
   const avg = totalDist / n;
-  return Math.max(0, Math.min(1, 1 - avg * 3));
+  return Math.max(0, Math.min(1, 1 - avg * 2));
 }
 
 /**

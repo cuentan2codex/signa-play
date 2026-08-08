@@ -181,7 +181,7 @@ export default function CameraView({
 
           // Track raw landmark history for movement recognition
           movementLandmarksRef.current.push([...landmarks]);
-          if (movementLandmarksRef.current.length > 40) {
+          if (movementLandmarksRef.current.length > 90) {
             movementLandmarksRef.current.shift();
           }
           onMovementHistoryRef.current?.([...movementLandmarksRef.current]);
