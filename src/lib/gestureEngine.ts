@@ -483,6 +483,14 @@ export function savePosesToStorage(poses: Record<string, SavedPose>): void {
   }
 }
 
+/**
+ * Valid keys: single letters A-Z or known movement letter keys.
+ * Anything else (words, corrupted data) is discarded.
+ */
+const VALID_LETTERS = new Set(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+);
+
 export function loadPosesFromStorage(): Record<string, SavedPose> {
   if (typeof window !== 'undefined') {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -490,10 +498,19 @@ export function loadPosesFromStorage(): Record<string, SavedPose> {
       try {
         const parsed: Record<string, any> = JSON.parse(data);
         const migrated: Record<string, SavedPose> = {};
+        let cleaned = false;
         for (const [key, raw] of Object.entries(parsed)) {
-          migrated[key] = migratePose(raw);
+          // Only allow valid single-letter keys (A-Z)
+          if (key.length === 1 && VALID_LETTERS.has(key.toUpperCase())) {
+            migrated[key.toUpperCase()] = migratePose(raw);
+          } else {
+            cleaned = true;
+          }
         }
-        // Save migrated data back
+        if (cleaned) {
+          console.warn(`[SeñaPlay] Cleaned invalid keys from localStorage`);
+        }
+        // Save migrated/cleaned data back
         savePosesToStorage(migrated);
         return migrated;
       } catch {
