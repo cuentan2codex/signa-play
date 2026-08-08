@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CameraView from './CameraView';
-import { HandLandmark, FeatureVector, SavedPose, MovementType } from '@/lib/types';
+import { HandLandmark, FeatureVector, SavedPose } from '@/lib/types';
 import {
   loadPosesFromStorage,
   savePoseToStorage,
   deletePoseFromStorage,
   MOVEMENT_LETTERS,
 } from '@/lib/gameData';
-import { extractFeatures, detectMovement } from '@/lib/gestureEngine';
+import { detectMovement } from '@/lib/gestureEngine';
 
 interface TrainingModeProps {
   onBack: () => void;
@@ -33,7 +33,6 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [showSuccess, setShowSuccess] = useState<string | null>(null);
   const [currentLandmarks, setCurrentLandmarks] = useState<HandLandmark[]>([]);
   const [currentFeatures, setCurrentFeatures] = useState<FeatureVector | null>(null);
-  const [detectingPose, setDetectingPose] = useState(false);
   const recordingRef = useRef<FeatureVector[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);

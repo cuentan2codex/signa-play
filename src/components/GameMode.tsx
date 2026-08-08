@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Progress } from '@/components/ui/progress';
 import CameraView from './CameraView';
 import { HandLandmark, FeatureVector, SavedPose } from '@/lib/types';
 import {
-  recognizeGesture,
   loadPosesFromStorage,
   saveScore,
   loadScore,
@@ -19,7 +18,6 @@ import {
   LEVELS,
   MOVEMENT_LETTERS,
 } from '@/lib/gameData';
-import { compareFeatures, extractFeatures } from '@/lib/gestureEngine';
 
 interface GameModeProps {
   levelId: number;
@@ -37,7 +35,9 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
-  const [savedPoses, setSavedPoses] = useState<Record<string, SavedPose>>({});
+  const [savedPoses, setSavedPoses] = useState<Record<string, SavedPose>>(() =>
+    typeof window !== 'undefined' ? loadPosesFromStorage() : {}
+  );
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [detectedLetter, setDetectedLetter] = useState<string | null>(null);
   const [currentMovement, setCurrentMovement] = useState<string | null>(null);
@@ -50,102 +50,77 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
   const currentLetter = letters[currentLetterIndex] || '';
   const isMovementLetter = !!MOVEMENT_LETTERS[currentLetter];
 
-  useEffect(() => {
-    setSavedPoses(loadPosesFromStorage());
-    const progress = loadProgress();
-    const levelProgress = progress.find((p) => p.levelId === levelId);
-    if (levelProgress) {
-      setScore(levelProgress.bestScore);
-      setCompletedWords(levelProgress.completedWords);
+  // Handle landmarks for movement tracking
+  const handleLandmarks = (landmarks: HandLandmark[], features: FeatureVector) => {
+    lastLandmarksRef.current = landmarks;
+    movementFramesRef.current.push(features);
+    if (movementFramesRef.current.length > 30) {
+      movementFramesRef.current.shift();
     }
-  }, [levelId]);
+  };
+
+  // Handle movement detection
+  const handleMovementDetected = (movementType: string) => {
+    setCurrentMovement(movementType);
+  };
 
   // Gesture detection handler
-  const handleGestureDetected = useCallback(
-    (letter: string, confidence: number) => {
-      if (!currentLetter || gameComplete) return;
+  const handleGestureDetected = (letter: string, confidence: number) => {
+    if (!currentLetter || gameComplete) return;
 
-      setDetectedLetter(letter);
+    setDetectedLetter(letter);
 
-      if (letter === currentLetter) {
-        // Correct!
-        setFeedback('correct');
-        const points = 10 + Math.round(confidence * 10);
-        setScore((prev) => prev + points);
-        setTotalScore((prev) => prev + points);
+    if (letter === currentLetter) {
+      setFeedback('correct');
+      const points = 10 + Math.round(confidence * 10);
+      setScore((prev) => prev + points);
+      setTotalScore((prev) => prev + points);
 
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+
+        if (currentLetterIndex < letters.length - 1) {
+          setCurrentLetterIndex((prev) => prev + 1);
+        } else {
+          const newCompleted = [...completedWords, currentWord];
+          setCompletedWords(newCompleted);
+          setShowHint(false);
+
+          if (currentWordIndex < (level?.words.length || 0) - 1) {
+            setCurrentWordIndex((prev) => prev + 1);
+            setCurrentLetterIndex(0);
+          } else {
+            setGameComplete(true);
+            saveScore(totalScore + points);
+            const progress = loadProgress();
+            const existing = progress.findIndex((p) => p.levelId === levelId);
+            const newProgress: LevelProgress = {
+              levelId,
+              completed: true,
+              completedWords: newCompleted,
+              bestScore: Math.max(score + points, progress[existing]?.bestScore || 0),
+            };
+            if (existing >= 0) {
+              progress[existing] = newProgress;
+            } else {
+              progress.push(newProgress);
+            }
+            saveProgress(progress);
+            onLevelComplete(levelId, score + points);
+          }
+        }
+      }, 800);
+    } else {
+      if (feedback !== 'wrong') {
+        setFeedback('wrong');
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
         feedbackTimeoutRef.current = setTimeout(() => {
           setFeedback(null);
-
-          if (currentLetterIndex < letters.length - 1) {
-            // Next letter
-            setCurrentLetterIndex((prev) => prev + 1);
-          } else {
-            // Word complete!
-            const newCompleted = [...completedWords, currentWord];
-            setCompletedWords(newCompleted);
-            setShowHint(false);
-
-            if (currentWordIndex < (level?.words.length || 0) - 1) {
-              // Next word
-              setCurrentWordIndex((prev) => prev + 1);
-              setCurrentLetterIndex(0);
-            } else {
-              // Level complete!
-              setGameComplete(true);
-              saveScore(totalScore + points);
-              const progress = loadProgress();
-              const existing = progress.findIndex((p) => p.levelId === levelId);
-              const newProgress: LevelProgress = {
-                levelId,
-                completed: true,
-                completedWords: newCompleted,
-                bestScore: Math.max(score + points, progress[existing]?.bestScore || 0),
-              };
-              if (existing >= 0) {
-                progress[existing] = newProgress;
-              } else {
-                progress.push(newProgress);
-              }
-              saveProgress(progress);
-              onLevelComplete(levelId, score + points);
-            }
-          }
-        }, 800);
-      } else {
-        // Wrong gesture
-        if (feedback !== 'wrong') {
-          setFeedback('wrong');
-          if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-          feedbackTimeoutRef.current = setTimeout(() => {
-            setFeedback(null);
-          }, 500);
-        }
+        }, 500);
       }
-    },
-    [currentLetter, currentLetterIndex, letters.length, currentWord, currentWordIndex, level, completedWords, gameComplete, score, totalScore, feedback, onLevelComplete]
-  );
-
-  // Handle landmarks for movement tracking
-  const handleLandmarks = useCallback(
-    (landmarks: HandLandmark[], features: FeatureVector) => {
-      lastLandmarksRef.current = landmarks;
-      movementFramesRef.current.push(features);
-      if (movementFramesRef.current.length > 30) {
-        movementFramesRef.current.shift();
-      }
-    },
-    []
-  );
-
-  // Handle movement detection
-  const handleMovementDetected = useCallback(
-    (movementType: string) => {
-      setCurrentMovement(movementType);
-    },
-    []
-  );
+    }
+  };
 
   // Keyboard fallback for testing / accessibility
   useEffect(() => {
@@ -158,7 +133,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
     }
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentLetter, gameComplete, handleGestureDetected]);
+  }, [currentLetter, gameComplete]);
 
   const handleRestart = () => {
     setCurrentWordIndex(0);
