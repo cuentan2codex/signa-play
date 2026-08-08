@@ -156,7 +156,6 @@ export default function CameraView({
         modelComplexity: isMobile ? 0 : 1,
         minDetectionConfidence: isMobile ? 0.5 : 0.7,
         minTrackingConfidence: isMobile ? 0.4 : 0.5,
-        selfieMode: true,
       });
 
       handsInstance.onResults((results: any) => {
