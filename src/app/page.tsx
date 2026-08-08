@@ -10,54 +10,7 @@ import GameMode from '@/components/GameMode';
 import TrainingMode from '@/components/TrainingMode';
 import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
-import { loadScore, loadProgress, loadPosesFromStorage, savePosesToStorage, SavedPose, LevelProgress } from '@/lib/gestureEngine';
-
-function initDefaultPoses(): Record<string, SavedPose> {
-  const patterns: Record<string, [number, number, number, number, number]> = {
-    A: [0, 0, 0, 0, 0],
-    B: [1, 1, 1, 1, 1],
-    C: [1, 0, 0, 0, 1],
-    D: [1, 1, 0, 0, 0],
-    E: [0, 0, 0, 0, 1],
-    F: [1, 1, 1, 0, 0],
-    I: [0, 0, 0, 0, 1],
-    K: [1, 1, 1, 0, 0],
-    L: [1, 1, 0, 0, 0],
-    M: [0, 0, 0, 0, 0],
-    N: [0, 0, 0, 0, 0],
-    O: [0, 0, 0, 0, 0],
-    P: [1, 1, 0, 0, 0],
-    Q: [1, 1, 0, 0, 0],
-    R: [0, 1, 1, 0, 0],
-    S: [0, 0, 0, 0, 0],
-    T: [0, 0, 0, 0, 0],
-    U: [0, 1, 1, 0, 0],
-    V: [0, 1, 1, 0, 0],
-    W: [0, 1, 1, 1, 0],
-    Y: [1, 0, 0, 0, 1],
-  };
-
-  const poses: Record<string, SavedPose> = {};
-  for (const [letter, fingers] of Object.entries(patterns)) {
-    poses[letter] = {
-      letter,
-      features: {
-        thumb: fingers[0],
-        index: fingers[1],
-        middle: fingers[2],
-        ring: fingers[3],
-        pinky: fingers[4],
-        thumbAngle: 0,
-        indexAngle: 0,
-        wristHeight: 0.5,
-      },
-      landmarks: [],
-      isMovement: false,
-      createdAt: Date.now(),
-    };
-  }
-  return poses;
-}
+import { loadScore, loadProgress, loadPosesFromStorage, LevelProgress } from '@/lib/gestureEngine';
 
 export default function Home() {
   const [view, setView] = useState<AppView>('menu');
@@ -79,14 +32,7 @@ export default function Home() {
       }
     }
     const poses = loadPosesFromStorage();
-    let posesCount = 0;
-    if (Object.keys(poses).length === 0) {
-      const defaults = initDefaultPoses();
-      savePosesToStorage(defaults);
-      posesCount = Object.keys(defaults).length;
-    } else {
-      posesCount = Object.keys(poses).length;
-    }
+    const posesCount = Object.keys(poses).length;
     // Batch state updates via a single callback to satisfy react-hooks lint
     startTransition(() => {
       setTotalScore(score);
