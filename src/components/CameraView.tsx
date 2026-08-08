@@ -70,8 +70,8 @@ export default function CameraView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isHandDetected, setIsHandDetected] = useState(false);
-  const [showLandmarks, setShowLandmarks] = useState(true);
-  const showLandmarksRef = useRef(true);
+  const [showLandmarks, setShowLandmarks] = useState(false);
+  const showLandmarksRef = useRef(false);
   useEffect(() => { showLandmarksRef.current = showLandmarks; }, [showLandmarks]);
 
   // Feature-based movement tracking (for movement type detection)
