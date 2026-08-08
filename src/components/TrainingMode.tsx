@@ -68,10 +68,14 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     (landmarks: HandLandmark[], _features: FeatureVector) => {
       setCurrentLandmarks(landmarks);
 
-      // Record movement frames if recording
+      // Record movement frames if recording (auto-stop at 90 frames = 3s @ 30fps)
       if (isRecordingMovement) {
         recordingRef.current.push([...landmarks]);
         setRecordedFrameCount(recordingRef.current.length);
+        if (recordingRef.current.length >= 90) {
+          setIsRecordingMovement(false);
+          // Save will be handled by useEffect below
+        }
       }
 
       // Calculate live confidence against selected letter
@@ -124,6 +128,34 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const startCapture = () => {
     capturePose();
   };
+
+  // Auto-save movement when recording reaches 90 frames
+  useEffect(() => {
+    if (!isRecordingMovement && recordingRef.current.length >= 90) {
+      const frames = recordingRef.current;
+      recordingRef.current = [];
+
+      const existing = savedPoses[selectedLetter];
+      const newMovementSamples = existing?.movementSamples
+        ? [...existing.movementSamples, frames]
+        : [frames];
+
+      const pose: SavedPose = {
+        letter: selectedLetter,
+        samples: existing?.samples || [],
+        isMovement: true,
+        movementType: MOVEMENT_LETTERS[selectedLetter]?.type as any,
+        movementSamples: newMovementSamples,
+        createdAt: existing?.createdAt || Date.now(),
+      };
+
+      savePoseToStorage(pose);
+      refreshPoses();
+      setShowSuccess(selectedLetter);
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = setTimeout(() => setShowSuccess(null), 2000);
+    }
+  }, [isRecordingMovement]);
 
   // Start recording movement (raw landmarks per frame)
   const startMovementRecording = () => {
@@ -332,12 +364,12 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
               {isMovementLetter && (
                 <Button
                   onClick={isRecordingMovement ? stopMovementRecording : startMovementRecording}
-                  disabled={!cameraReady || !currentLandmarks.length}
+                  disabled={!cameraReady || !currentLandmarks.length || (isRecordingMovement && recordedFrameCount >= 90)}
                   variant={isRecordingMovement ? 'destructive' : 'default'}
                   className={`flex-1 ${!isRecordingMovement ? 'bg-purple-500 hover:bg-purple-600' : ''}`}
                 >
                   {isRecordingMovement
-                    ? `Detener (${recordedFrameCount} frames)`
+                    ? `Detener (${recordedFrameCount}/90)`
                     : `Grabar movimiento (${sampleCount + 1})`}
                 </Button>
               )}
@@ -360,16 +392,18 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                 </div>
                 <div className="w-full bg-purple-100 rounded-full h-2">
                   <div
-                    className="bg-purple-500 h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (recordedFrameCount / 30) * 100)}%` }}
+                    className={`h-2 rounded-full transition-all ${recordedFrameCount >= 90 ? 'bg-green-500' : 'bg-purple-500'}`}
+                    style={{ width: `${Math.min(100, (recordedFrameCount / 90) * 100)}%` }}
                   />
                 </div>
                 <p className="text-xs text-purple-500 mt-1">
-                  {recordedFrameCount < 10
-                    ? 'Sigue moviendo la mano...'
-                    : recordedFrameCount < 20
-                      ? 'Bien, sigue un poco más...'
-                      : 'Excelente! Puedes detener cuando quieras'}
+                  {recordedFrameCount >= 90
+                    ? 'Grabación completa!'
+                    : recordedFrameCount < 30
+                      ? 'Sigue moviendo la mano...'
+                      : recordedFrameCount < 60
+                        ? 'Bien, sigue un poco más...'
+                        : 'Ya casi, termina el gesto!'}
                 </p>
               </div>
             )}
