@@ -58,6 +58,13 @@ export default function CameraView({
   const mpCameraRef = useRef<any>(null);
   const animationRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
+  // Keep latest callbacks in refs so the MediaPipe closure always calls current versions
+  const onLandmarksDetectedRef = useRef(onLandmarksDetected);
+  const onMovementHistoryRef = useRef(onMovementHistory);
+  const onMovementTypeDetectedRef = useRef(onMovementTypeDetected);
+  useEffect(() => { onLandmarksDetectedRef.current = onLandmarksDetected; });
+  useEffect(() => { onMovementHistoryRef.current = onMovementHistory; });
+  useEffect(() => { onMovementTypeDetectedRef.current = onMovementTypeDetected; });
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,14 +177,14 @@ export default function CameraView({
           setIsHandDetected(true);
 
           const features = extractFeatures(landmarks);
-          onLandmarksDetected?.(landmarks, features);
+          onLandmarksDetectedRef.current?.(landmarks, features);
 
           // Track raw landmark history for movement recognition
           movementLandmarksRef.current.push([...landmarks]);
           if (movementLandmarksRef.current.length > 40) {
             movementLandmarksRef.current.shift();
           }
-          onMovementHistory?.([...movementLandmarksRef.current]);
+          onMovementHistoryRef.current?.([...movementLandmarksRef.current]);
 
           // Track feature-based movement for type detection
           movementFeatureFramesRef.current.push(features);
@@ -188,7 +195,7 @@ export default function CameraView({
           if (movementFeatureFramesRef.current.length >= 10) {
             const movement = detectMovement(movementFeatureFramesRef.current);
             if (movement !== 'none') {
-              onMovementTypeDetected?.(movement);
+              onMovementTypeDetectedRef.current?.(movement);
             }
           }
 
@@ -216,7 +223,7 @@ export default function CameraView({
           setIsHandDetected(false);
           movementFeatureFramesRef.current = [];
           movementLandmarksRef.current = [];
-          onMovementHistory?.([]);
+          onMovementHistoryRef.current?.([]);
         }
       });
 
