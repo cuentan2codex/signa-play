@@ -14,6 +14,7 @@ import {
   deletePoseFromStorage,
   deleteAllPosesFromStorage,
   getLetterConfidence,
+  getMovementLetterConfidence,
   comparePoses,
   normalizeLandmarks,
 } from '@/lib/gestureEngine';
@@ -49,6 +50,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const recordingRef = useRef<HandLandmark[][]>([]);
+  const movementHistoryRef = useRef<HandLandmark[][]>([]);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -58,6 +60,8 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const refreshPoses = useCallback(() => {
     setSavedPoses(loadPosesFromStorage());
   }, []);
+
+  const isMovementLetter = !!MOVEMENT_LETTERS[selectedLetter];
 
   // Handle landmarks: update live confidence
   const handleLandmarks = useCallback(
@@ -72,11 +76,25 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
 
       // Calculate live confidence against selected letter
       if (landmarks.length === 21) {
-        const conf = getLetterConfidence(landmarks, selectedLetter, savedPoses);
-        setLiveConfidence(Math.round(conf * 100));
+        if (isMovementLetter) {
+          // For movement letters, confidence is based on trajectory history
+          const conf = getMovementLetterConfidence(movementHistoryRef.current, selectedLetter, savedPoses);
+          setLiveConfidence(Math.round(conf * 100));
+        } else {
+          const conf = getLetterConfidence(landmarks, selectedLetter, savedPoses);
+          setLiveConfidence(Math.round(conf * 100));
+        }
       }
     },
-    [isRecordingMovement, selectedLetter, savedPoses]
+    [isRecordingMovement, isMovementLetter, selectedLetter, savedPoses]
+  );
+
+  // Track movement history from camera for live confidence
+  const handleMovementHistory = useCallback(
+    (frames: HandLandmark[][]) => {
+      movementHistoryRef.current = frames;
+    },
+    []
   );
 
   // Capture a static pose sample (adds to existing samples)
@@ -184,7 +202,6 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     setShowDeleteAllDialog(false);
   };
 
-  const isMovementLetter = !!MOVEMENT_LETTERS[selectedLetter];
   const savedPose = savedPoses[selectedLetter];
   const hasPose = !!savedPose;
   const sampleCount = savedPose
@@ -258,6 +275,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
           <div className="relative aspect-[4/3] max-h-[65vh]">
             <CameraView
               onLandmarksDetected={handleLandmarks}
+              onMovementHistory={handleMovementHistory}
               isActive={true}
               onReady={() => setCameraReady(true)}
               onLoadingChange={() => {}}

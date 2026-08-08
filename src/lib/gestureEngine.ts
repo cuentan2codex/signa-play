@@ -138,6 +138,30 @@ export function getLetterConfidence(
   return bestSim;
 }
 
+/**
+ * Get the confidence (0-1) for a movement letter given recent frame history.
+ */
+export function getMovementLetterConfidence(
+  currentFrames: HandLandmark[][],
+  letter: string,
+  savedPoses: Record<string, SavedPose>
+): number {
+  const pose = savedPoses[letter];
+  if (!pose || !pose.isMovement || !pose.movementSamples?.length) return 0;
+  if (currentFrames.length < 8) return 0;
+
+  const currentTraj = extractTrajectory(currentFrames);
+  let bestSim = 0;
+
+  for (const savedRecording of pose.movementSamples) {
+    const savedTraj = extractTrajectory(savedRecording);
+    const sim = compareTrajectories(currentTraj, savedTraj);
+    if (sim > bestSim) bestSim = sim;
+  }
+
+  return bestSim;
+}
+
 // ============================================================
 // MOVEMENT RECOGNITION (Trajectory-based, 21 coords per frame)
 // ============================================================
