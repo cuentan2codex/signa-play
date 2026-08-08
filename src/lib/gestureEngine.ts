@@ -150,7 +150,11 @@ export function getMovementLetterConfidence(
   if (!pose || !pose.isMovement || !pose.movementSamples?.length) return 0;
   if (currentFrames.length < 8) return 0;
 
-  const currentTraj = extractTrajectory(currentFrames);
+  // Trim still frames from start/end so only actual movement is compared
+  const trimmed = trimStillFrames(currentFrames);
+  if (trimmed.length < 8) return 0;
+
+  const currentTraj = extractTrajectory(trimmed);
   let bestSim = 0;
 
   for (const savedRecording of pose.movementSamples) {
@@ -160,6 +164,42 @@ export function getMovementLetterConfidence(
   }
 
   return bestSim;
+}
+
+/**
+ * Trim leading/trailing frames where the index fingertip isn't moving.
+ * This prevents still frames from diluting the trajectory comparison.
+ */
+function trimStillFrames(frames: HandLandmark[][]): HandLandmark[][] {
+  if (frames.length < 3) return frames;
+
+  const threshold = 0.004;
+  let start = 0;
+  let end = frames.length - 1;
+
+  // Find first frame with movement
+  for (let i = 1; i < frames.length; i++) {
+    const dx = frames[i][8].x - frames[i - 1][8].x;
+    const dy = frames[i][8].y - frames[i - 1][8].y;
+    if (Math.sqrt(dx * dx + dy * dy) > threshold) {
+      start = Math.max(0, i - 1);
+      break;
+    }
+    if (i === frames.length - 1) return frames.slice(-8); // all still, return last frames
+  }
+
+  // Find last frame with movement
+  for (let i = frames.length - 2; i >= 0; i--) {
+    const dx = frames[i + 1][8].x - frames[i][8].x;
+    const dy = frames[i + 1][8].y - frames[i][8].y;
+    if (Math.sqrt(dx * dx + dy * dy) > threshold) {
+      end = Math.min(frames.length - 1, i + 1);
+      break;
+    }
+  }
+
+  if (end <= start) return frames;
+  return frames.slice(start, end + 1);
 }
 
 // ============================================================
