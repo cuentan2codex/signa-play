@@ -415,7 +415,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col lg:flex-row gap-6">
         {/* Left: Camera */}
         <div className="flex-1 flex flex-col gap-4">
-          <div className="relative aspect-[4/3] max-h-[65vh]">
+          <div className="relative aspect-[4/3] max-h-[40vh] lg:max-h-[65vh]">
             <CameraView
               onLandmarksDetected={handleLandmarks}
               onMovementHistory={handleMovementHistory}
