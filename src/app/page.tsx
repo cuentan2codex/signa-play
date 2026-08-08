@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,29 @@ import { LEVELS } from '@/lib/gameData';
 import { loadScore, loadProgress, loadPosesFromStorage, LevelProgress } from '@/lib/gestureEngine';
 import { useTheme } from 'next-themes';
 import ThemeToggle from '@/components/ThemeToggle';
+import LiquidGlassBg from '@/components/LiquidGlassBg';
+import { useCursorGlow } from '@/hooks/useCursorGlow';
+
+type ThemeId = 'default' | 'liquid-glass';
+
+const THEMES: { id: ThemeId; name: string; description: string; previewLight: string; previewDark: string; previewLg: string }[] = [
+  {
+    id: 'default',
+    name: 'Predeterminado',
+    description: 'Tema original de SeñaPlay',
+    previewLight: 'bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50',
+    previewDark: 'bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950',
+    previewLg: '',
+  },
+  {
+    id: 'liquid-glass',
+    name: 'LIQUID GLASS',
+    description: 'Vidrio líquido óptico — God Tier',
+    previewLight: '',
+    previewDark: '',
+    previewLg: 'bg-gradient-to-br from-[#050510] via-[#0a0a20] to-[#0d0818]',
+  },
+];
 
 export default function Home() {
   const [view, setView] = useState<AppView>('menu');
@@ -23,7 +46,38 @@ export default function Home() {
   const [levelProgressData, setLevelProgressData] = useState<LevelProgress[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [activeThemeId, setActiveThemeId] = useState<ThemeId>('default');
   const { theme, setTheme } = useTheme();
+
+  // Apply / remove theme-liquid-glass class on <html>
+  const applyThemeClass = useCallback((id: ThemeId) => {
+    const root = document.documentElement;
+    if (id === 'liquid-glass') {
+      root.classList.add('theme-liquid-glass');
+      setTheme('dark');
+    } else {
+      root.classList.remove('theme-liquid-glass');
+    }
+  }, [setTheme]);
+
+  // Restore theme from localStorage
+  useEffect(() => {
+    const saved = (typeof window !== 'undefined' && localStorage.getItem('signa-theme')) as ThemeId | null;
+    if (saved && THEMES.some((t) => t.id === saved)) {
+      setActiveThemeId(saved);
+      applyThemeClass(saved);
+    }
+  }, [applyThemeClass]);
+
+  const handleSelectTheme = useCallback((id: ThemeId) => {
+    setActiveThemeId(id);
+    applyThemeClass(id);
+    localStorage.setItem('signa-theme', id);
+  }, [applyThemeClass]);
+
+  // Cursor glow for Liquid Glass
+  const isLiquidGlass = activeThemeId === 'liquid-glass';
+  useCursorGlow();
 
   // Load data from localStorage only after mount (safe hydration pattern)
   useEffect(() => {
@@ -68,7 +122,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col ${isLiquidGlass ? 'theme-liquid-glass' : ''}`}>
       <AnimatePresence mode="wait">
         {view === 'menu' && (
           <motion.div
@@ -76,8 +130,10 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
+            className={`min-h-screen flex flex-col ${isLiquidGlass ? '' : 'bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950'}`}
           >
+            {/* Liquid Glass ambient background */}
+            {isLiquidGlass && <LiquidGlassBg />}
             {/* Top-right controls */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
               <ThemeToggle />
@@ -106,69 +162,113 @@ export default function Home() {
                         <p className="text-[11px] text-muted-foreground mt-0.5">Elige un tema y su variante claro/oscuro</p>
                       </div>
                       <div className="p-3 space-y-2.5">
-                        {/* Tema Predeterminado */}
-                        <div className={[
-                          'rounded-xl border-2 p-3 transition-all',
-                          'border-sky-400 dark:border-sky-500 bg-sky-50/50 dark:bg-orange-950/20',
-                        ].join(' ')}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Predeterminado</p>
-                              <p className="text-[10px] text-muted-foreground">Tema original de SeñaPlay</p>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] text-muted-foreground">
-                                {theme === 'dark' ? 'Oscuro' : 'Claro'}
-                              </span>
-                              <button
-                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
-                                style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#7dd3fc' }}
-                                aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
-                              >
-                                <div
-                                  className="absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 flex items-center justify-center"
-                                  style={{
-                                    left: theme === 'dark' ? '1.375rem' : '0.125rem',
-                                    backgroundColor: theme === 'dark' ? '#cbd5e1' : '#fff',
-                                    boxShadow: theme === 'dark'
-                                      ? '0 0 6px 1px rgba(203,213,225,0.4)'
-                                      : '0 0 4px 1px rgba(251,191,36,0.5)',
-                                  }}
-                                >
-                                  {theme === 'light' && (
-                                    <svg className="w-2.5 h-2.5" style={{ color: '#0284c7' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                      <circle cx="12" cy="12" r="4" />
-                                    </svg>
+                        {THEMES.map((t) => {
+                          const isActive = activeThemeId === t.id;
+                          return (
+                            <div
+                              key={t.id}
+                              onClick={() => handleSelectTheme(t.id)}
+                              className={[
+                                'rounded-xl border-2 p-3 transition-all cursor-pointer',
+                                isActive
+                                  ? t.id === 'liquid-glass'
+                                    ? 'border-blue-400/60 bg-blue-950/30'
+                                    : 'border-sky-400 dark:border-sky-500 bg-sky-50/50 dark:bg-orange-950/20'
+                                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+                              ].join(' ')}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <p className={`text-xs font-bold ${t.id === 'liquid-glass' ? 'text-blue-200' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    {t.name}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">{t.description}</p>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {t.id === 'default' && (
+                                    <>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {theme === 'dark' ? 'Oscuro' : 'Claro'}
+                                      </span>
+                                      <button
+                                                onClick={(e) => { e.stopPropagation(); setTheme(theme === 'dark' ? 'light' : 'dark'); }}
+                                                className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
+                                                style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#7dd3fc' }}
+                                                aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
+                                              >
+                                                <div
+                                                  className="absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 flex items-center justify-center"
+                                                  style={{
+                                                    left: theme === 'dark' ? '1.375rem' : '0.125rem',
+                                                    backgroundColor: theme === 'dark' ? '#cbd5e1' : '#fff',
+                                                    boxShadow: theme === 'dark'
+                                                      ? '0 0 6px 1px rgba(203,213,225,0.4)'
+                                                      : '0 0 4px 1px rgba(251,191,36,0.5)',
+                                                  }}
+                                                >
+                                                  {theme === 'light' && (
+                                                    <svg className="w-2.5 h-2.5" style={{ color: '#0284c7' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                      <circle cx="12" cy="12" r="4" />
+                                                    </svg>
+                                                  )}
+                                                  {theme === 'dark' && (
+                                                    <svg className="w-2.5 h-2.5" style={{ color: '#334155' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                                    </svg>
+                                                  )}
+                                                </div>
+                                              </button>
+                                    </>
                                   )}
-                                  {theme === 'dark' && (
-                                    <svg className="w-2.5 h-2.5" style={{ color: '#334155' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                                    </svg>
+                                  {t.id === 'liquid-glass' && (
+                                    <span className="text-[10px] text-blue-300/70 font-medium tracking-wide">GOD TIER</span>
                                   )}
                                 </div>
-                              </button>
+                              </div>
+                              <div className="flex gap-1.5">
+                                {t.id === 'default' && (
+                                  <>
+                                    <div className={[
+                                      'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                                      theme === 'light'
+                                        ? 'ring-2 ring-sky-400 ring-offset-1'
+                                        : 'opacity-50',
+                                    ].join(' ')}>
+                                      <div className="w-full h-full bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50" />
+                                    </div>
+                                    <div className={[
+                                      'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                                      theme === 'dark'
+                                        ? 'ring-2 ring-sky-500 ring-offset-1 ring-offset-gray-800'
+                                        : 'opacity-50',
+                                    ].join(' ')}>
+                                      <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
+                                    </div>
+                                  </>
+                                )}
+                                {t.id === 'liquid-glass' && (
+                                  <div className="flex-1 h-10 rounded-lg overflow-hidden relative">
+                                    <div className={`w-full h-full ${t.previewLg} relative`}>
+                                      {/* Mini glass preview */}
+                                      <div className="absolute inset-[4px] rounded-md" style={{
+                                        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        backdropFilter: 'blur(8px)',
+                                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 0 12px rgba(140,200,255,0.15)',
+                                      }} />
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-3 h-3 rounded-full" style={{
+                                          background: 'radial-gradient(circle, rgba(140,200,255,0.4), transparent)',
+                                          boxShadow: '0 0 6px rgba(140,200,255,0.3)',
+                                        }} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex gap-1.5">
-                            <div className={[
-                              'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
-                              theme === 'light'
-                                ? 'ring-2 ring-sky-400 ring-offset-1'
-                                : 'opacity-50',
-                            ].join(' ')}>
-                              <div className="w-full h-full bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50" />
-                            </div>
-                            <div className={[
-                              'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
-                              theme === 'dark'
-                                ? 'ring-2 ring-sky-500 ring-offset-1 ring-offset-gray-800'
-                                : 'opacity-50',
-                            ].join(' ')}>
-                              <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
-                            </div>
-                          </div>
-                        </div>
+                          );
+                        })}
                       </div>
                     </motion.div>
                   )}
@@ -275,7 +375,7 @@ export default function Home() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-sky-100 dark:from-gray-950 dark:to-gray-900"
+            className={`min-h-screen flex flex-col ${isLiquidGlass ? '' : 'bg-gradient-to-b from-sky-50 to-sky-100 dark:from-gray-950 dark:to-gray-900'}`}
           >
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-sky-100 dark:border-gray-700">
               <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
