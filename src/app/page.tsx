@@ -105,6 +105,18 @@ export default function Home() {
     }
   };
 
+  // Guard: don't render until client-side data is loaded
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Cargando SeñaPlay...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <AnimatePresence mode="wait">
@@ -152,10 +164,7 @@ export default function Home() {
                 <div className="flex flex-col gap-4">
                   <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
                     <Button
-                      onClick={() => {
-                        if (mounted) { setLevelProgressData(loadProgress()); }
-                        setView('level-select');
-                      }}
+                      onClick={() => setView('level-select')}
                       className="w-full h-16 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 rounded-2xl gap-3"
                     >
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

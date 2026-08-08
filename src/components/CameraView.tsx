@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { HandLandmark, FeatureVector } from '@/lib/types';
-import { extractFeatures } from '@/lib/gestureEngine';
+import { extractFeatures, detectMovement } from '@/lib/gestureEngine';
 
 // Hand connections for drawing skeleton
 const HAND_CONNECTIONS = [

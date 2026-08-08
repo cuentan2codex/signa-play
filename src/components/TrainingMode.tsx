@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CameraView from './CameraView';
-import { HandLandmark, FeatureVector, SavedPose } from '@/lib/types';
+import { HandLandmark, FeatureVector, SavedPose, MovementType } from '@/lib/types';
 import { MOVEMENT_LETTERS } from '@/lib/gameData';
 import { loadPosesFromStorage, savePoseToStorage, deletePoseFromStorage, detectMovement } from '@/lib/gestureEngine';
 
@@ -33,6 +33,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Safe: loadPosesFromStorage checks typeof window
     setSavedPoses(loadPosesFromStorage());
   }, []);
 
