@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,14 +21,27 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [totalScore, setTotalScore] = useState(loadScore());
+  const [totalScore, setTotalScore] = useState(0);
   const [completedWords, setCompletedWords] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
-  const [savedPoses, setSavedPoses] = useState<Record<string, SavedPose>>(() =>
-    typeof window !== 'undefined' ? loadPosesFromStorage() : {}
-  );
+  const [savedPoses, setSavedPoses] = useState<Record<string, SavedPose>>({});
+
+  useEffect(() => {
+    const poses = loadPosesFromStorage();
+    const score = loadScore();
+    const progress = loadProgress();
+    const levelProgress = progress.find((p) => p.levelId === levelId);
+    const bestScore = levelProgress?.bestScore || 0;
+    const completed = levelProgress?.completedWords || [];
+    startTransition(() => {
+      setSavedPoses(poses);
+      setTotalScore(score);
+      setScore(bestScore);
+      setCompletedWords(completed);
+    });
+  }, [levelId]);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [detectedLetter, setDetectedLetter] = useState<string | null>(null);
   const [currentMovement, setCurrentMovement] = useState<string | null>(null);

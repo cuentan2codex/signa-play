@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,36 +10,31 @@ import GameMode from '@/components/GameMode';
 import TrainingMode from '@/components/TrainingMode';
 import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
-import { loadScore, loadProgress, loadPosesFromStorage, savePosesToStorage, SavedPose } from '@/lib/gestureEngine';
-
-// Default poses for common letters (pre-trained basic ASL-like gestures)
-const DEFAULT_POSES: Record<string, SavedPose> = {};
+import { loadScore, loadProgress, loadPosesFromStorage, savePosesToStorage, SavedPose, LevelProgress } from '@/lib/gestureEngine';
 
 function initDefaultPoses(): Record<string, SavedPose> {
-  // Basic finger patterns for common letters
-  // thumb, index, middle, ring, pinky (0=curled, 1=extended)
   const patterns: Record<string, [number, number, number, number, number]> = {
-    A: [0, 0, 0, 0, 0],  // Fist (all curled)
-    B: [1, 1, 1, 1, 1],  // All fingers extended, flat hand
-    C: [1, 0, 0, 0, 1],  // C shape - thumb and pinky extended
-    D: [1, 1, 0, 0, 0],  // Index up, rest curled
-    E: [0, 0, 0, 0, 1],  // All curled except pinky slightly out
-    F: [1, 1, 1, 0, 0],  // Index and middle up, thumb touching them
-    I: [0, 0, 0, 0, 1],  // Pinky up only
-    K: [1, 1, 1, 0, 0],  // Index and middle up, thumb out
-    L: [1, 1, 0, 0, 0],  // L shape - index up, thumb out
-    M: [0, 0, 0, 0, 0],  // Three fingers over thumb
-    N: [0, 0, 0, 0, 0],  // Two fingers over thumb
-    O: [0, 0, 0, 0, 0],  // All fingertips touching thumb (circle)
-    P: [1, 1, 0, 0, 0],  // Like K but pointing down
-    Q: [1, 1, 0, 0, 0],  // Like G but pointing down
-    R: [0, 1, 1, 0, 0],  // Index and middle crossed
-    S: [0, 0, 0, 0, 0],  // Fist thumb over fingers
-    T: [0, 0, 0, 0, 0],  // Thumb between index and middle
-    U: [0, 1, 1, 0, 0],  // Index and middle up together
-    V: [0, 1, 1, 0, 0],  // Peace sign
-    W: [0, 1, 1, 1, 0],  // Index, middle, ring up
-    Y: [1, 0, 0, 0, 1],  // Thumb and pinky out (hang loose)
+    A: [0, 0, 0, 0, 0],
+    B: [1, 1, 1, 1, 1],
+    C: [1, 0, 0, 0, 1],
+    D: [1, 1, 0, 0, 0],
+    E: [0, 0, 0, 0, 1],
+    F: [1, 1, 1, 0, 0],
+    I: [0, 0, 0, 0, 1],
+    K: [1, 1, 1, 0, 0],
+    L: [1, 1, 0, 0, 0],
+    M: [0, 0, 0, 0, 0],
+    N: [0, 0, 0, 0, 0],
+    O: [0, 0, 0, 0, 0],
+    P: [1, 1, 0, 0, 0],
+    Q: [1, 1, 0, 0, 0],
+    R: [0, 1, 1, 0, 0],
+    S: [0, 0, 0, 0, 0],
+    T: [0, 0, 0, 0, 0],
+    U: [0, 1, 1, 0, 0],
+    V: [0, 1, 1, 0, 0],
+    W: [0, 1, 1, 1, 0],
+    Y: [1, 0, 0, 0, 1],
   };
 
   const poses: Record<string, SavedPose> = {};
@@ -64,31 +59,43 @@ function initDefaultPoses(): Record<string, SavedPose> {
   return poses;
 }
 
-function getInitialData() {
-  const score = loadScore();
-  const progress = loadProgress();
-  const unlocked = [1];
-  for (const p of progress) {
-    if (p.completed) {
-      unlocked.push(p.levelId + 1);
-    }
-  }
-  const poses = loadPosesFromStorage();
-  if (Object.keys(poses).length === 0) {
-    const defaults = initDefaultPoses();
-    savePosesToStorage(defaults);
-    return { score, unlocked, posesCount: Object.keys(defaults).length };
-  }
-  return { score, unlocked, posesCount: Object.keys(poses).length };
-}
-
 export default function Home() {
-  const initial = typeof window !== 'undefined' ? getInitialData() : { score: 0, unlocked: [1], posesCount: 0 };
   const [view, setView] = useState<AppView>('menu');
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
-  const [totalScore, setTotalScore] = useState(initial.score);
-  const [unlockedLevels, setUnlockedLevels] = useState<number[]>(initial.unlocked);
-  const [savedPosesCount, setSavedPosesCount] = useState(initial.posesCount);
+  const [totalScore, setTotalScore] = useState(0);
+  const [unlockedLevels, setUnlockedLevels] = useState<number[]>([1]);
+  const [savedPosesCount, setSavedPosesCount] = useState(0);
+  const [levelProgressData, setLevelProgressData] = useState<LevelProgress[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  // Load data from localStorage only after mount (safe hydration pattern)
+  useEffect(() => {
+    const score = loadScore();
+    const progress = loadProgress();
+    const unlocked = [1];
+    for (const p of progress) {
+      if (p.completed) {
+        unlocked.push(p.levelId + 1);
+      }
+    }
+    const poses = loadPosesFromStorage();
+    let posesCount = 0;
+    if (Object.keys(poses).length === 0) {
+      const defaults = initDefaultPoses();
+      savePosesToStorage(defaults);
+      posesCount = Object.keys(defaults).length;
+    } else {
+      posesCount = Object.keys(poses).length;
+    }
+    // Batch state updates via a single callback to satisfy react-hooks lint
+    startTransition(() => {
+      setTotalScore(score);
+      setUnlockedLevels(unlocked);
+      setSavedPosesCount(posesCount);
+      setLevelProgressData(progress);
+      setMounted(true);
+    });
+  }, []);
 
   const handleLevelComplete = (levelId: number, score: number) => {
     setTotalScore((prev) => prev + score);
@@ -109,10 +116,8 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50"
           >
-            {/* Hero */}
             <main className="flex-1 flex items-center justify-center px-4 py-12">
               <div className="max-w-lg w-full text-center">
-                {/* Logo / Icon */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -144,11 +149,13 @@ export default function Home() {
                   Aprende lenguaje de señas jugando con tu cámara
                 </motion.p>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col gap-4">
                   <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
                     <Button
-                      onClick={() => setView('level-select')}
+                      onClick={() => {
+                        if (mounted) { setLevelProgressData(loadProgress()); }
+                        setView('level-select');
+                      }}
                       className="w-full h-16 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 rounded-2xl gap-3"
                     >
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -173,7 +180,6 @@ export default function Home() {
                   </motion.div>
                 </div>
 
-                {/* Stats */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -202,7 +208,6 @@ export default function Home() {
               </div>
             </main>
 
-            {/* Footer */}
             <footer className="text-center py-4 text-xs text-muted-foreground">
               Usa tu cámara web para hacer señas y deletrear palabras
             </footer>
@@ -239,8 +244,7 @@ export default function Home() {
               <div className="flex flex-col gap-6">
                 {LEVELS.map((level, index) => {
                   const isUnlocked = unlockedLevels.includes(level.id);
-                  const progress = loadProgress();
-                  const levelProgress = progress.find((p) => p.levelId === level.id);
+                  const levelProgress = levelProgressData.find((p) => p.levelId === level.id);
                   const completedWords = levelProgress?.completedWords.length || 0;
                   const progressPercent = (completedWords / level.words.length) * 100;
 
@@ -291,7 +295,6 @@ export default function Home() {
                           )}
                         </div>
 
-                        {/* Progress bar */}
                         {isUnlocked && (
                           <div className="mt-4">
                             <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -332,6 +335,7 @@ export default function Home() {
               onBack={() => {
                 setView('level-select');
                 setTotalScore(loadScore());
+                setLevelProgressData(loadProgress());
               }}
               onLevelComplete={handleLevelComplete}
             />
