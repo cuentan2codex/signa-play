@@ -54,11 +54,10 @@ export default function Home() {
     const root = document.documentElement;
     if (id === 'liquid-glass') {
       root.classList.add('theme-liquid-glass');
-      setTheme('dark');
     } else {
       root.classList.remove('theme-liquid-glass');
     }
-  }, [setTheme]);
+  }, []);
 
   // Restore theme from localStorage
   useEffect(() => {
@@ -74,6 +73,11 @@ export default function Home() {
     applyThemeClass(id);
     localStorage.setItem('signa-theme', id);
   }, [applyThemeClass]);
+
+  // Toggle light/dark within Liquid Glass theme
+  const handleLgToggleVariant = useCallback(() => {
+    setTheme((prev) => prev === 'dark' ? 'light' : 'dark');
+  }, [setTheme]);
 
   // Cursor glow for Liquid Glass
   const isLiquidGlass = activeThemeId === 'liquid-glass';
@@ -221,7 +225,37 @@ export default function Home() {
                                     </>
                                   )}
                                   {t.id === 'liquid-glass' && (
-                                    <span className="text-[10px] text-blue-300/70 font-medium tracking-wide">GOD TIER</span>
+                                    <>
+                                      <span className="text-[10px] text-blue-300/70 font-medium tracking-wide">GOD TIER</span>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleLgToggleVariant(); }}
+                                        className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
+                                        style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#bfdbfe' }}
+                                        aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
+                                      >
+                                        <div
+                                          className="absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 flex items-center justify-center"
+                                          style={{
+                                            left: theme === 'dark' ? '1.375rem' : '0.125rem',
+                                            backgroundColor: theme === 'dark' ? '#cbd5e1' : '#fff',
+                                            boxShadow: theme === 'dark'
+                                              ? '0 0 6px 1px rgba(100,170,255,0.4)'
+                                              : '0 0 4px 1px rgba(100,160,255,0.5)',
+                                          }}
+                                        >
+                                          {theme === 'light' && (
+                                            <svg className="w-2.5 h-2.5" style={{ color: '#3b82f6' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                              <circle cx="12" cy="12" r="4" />
+                                            </svg>
+                                          )}
+                                          {theme === 'dark' && (
+                                            <svg className="w-2.5 h-2.5" style={{ color: '#64748b' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                            </svg>
+                                          )}
+                                        </div>
+                                      </button>
+                                    </>
                                   )}
                                 </div>
                               </div>
@@ -247,23 +281,46 @@ export default function Home() {
                                   </>
                                 )}
                                 {t.id === 'liquid-glass' && (
-                                  <div className="flex-1 h-10 rounded-lg overflow-hidden relative">
-                                    <div className={`w-full h-full ${t.previewLg} relative`}>
-                                      {/* Mini glass preview */}
-                                      <div className="absolute inset-[4px] rounded-md" style={{
-                                        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-                                        border: '1px solid rgba(255,255,255,0.15)',
-                                        backdropFilter: 'blur(8px)',
-                                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 0 12px rgba(140,200,255,0.15)',
-                                      }} />
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-3 h-3 rounded-full" style={{
-                                          background: 'radial-gradient(circle, rgba(140,200,255,0.4), transparent)',
-                                          boxShadow: '0 0 6px rgba(140,200,255,0.3)',
+                                  <>
+                                    <div className={[
+                                      'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                                      theme === 'light' && isActive
+                                        ? 'ring-2 ring-blue-400 ring-offset-1'
+                                        : isActive && theme === 'dark'
+                                          ? 'opacity-50'
+                                          : 'opacity-80',
+                                    ].join(' ')}>
+                                      <div className="w-full h-full bg-gradient-to-br from-[#f0f4ff] via-[#e8eeff] to-[#f2eeff] relative">
+                                        <div className="absolute inset-[4px] rounded-md" style={{
+                                          background: 'linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.35) 100%)',
+                                          border: '1px solid rgba(200,215,240,0.5)',
+                                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), 0 0 8px rgba(120,180,255,0.1)',
                                         }} />
                                       </div>
                                     </div>
-                                  </div>
+                                    <div className={[
+                                      'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                                      theme === 'dark' && isActive
+                                        ? 'ring-2 ring-blue-500 ring-offset-1 ring-offset-gray-900'
+                                        : isActive && theme === 'light'
+                                          ? 'opacity-50'
+                                          : 'opacity-80',
+                                    ].join(' ')}>
+                                      <div className="w-full h-full bg-gradient-to-br from-[#050510] via-[#0a0a20] to-[#0d0818] relative">
+                                        <div className="absolute inset-[4px] rounded-md" style={{
+                                          background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+                                          border: '1px solid rgba(255,255,255,0.15)',
+                                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 0 12px rgba(140,200,255,0.15)',
+                                        }} />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <div className="w-3 h-3 rounded-full" style={{
+                                            background: 'radial-gradient(circle, rgba(140,200,255,0.4), transparent)',
+                                            boxShadow: '0 0 6px rgba(140,200,255,0.3)',
+                                          }} />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </>
                                 )}
                               </div>
                             </div>

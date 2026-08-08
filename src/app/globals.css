@@ -167,6 +167,307 @@
   color-scheme: dark;
 }
 
+/* ============================================
+   LIQUID GLASS — LIGHT MODE VARIANT
+   Frosted crystalline glass on luminous background
+   ============================================ */
+.theme-liquid-glass.light {
+  --lg-glass-bg: rgba(255, 255, 255, 0.55);
+  --lg-glass-border: rgba(255, 255, 255, 0.7);
+  --lg-glass-highlight: rgba(255, 255, 255, 0.9);
+  --lg-glass-shadow: rgba(80, 120, 180, 0.08);
+  --lg-refraction-strength: 2px;
+  --lg-chromatic-shift: 0.8px;
+  --lg-caustic-color: rgba(100, 160, 240, 0.08);
+  --lg-particle-opacity: 0.5;
+  --lg-glow-intensity: 0.6;
+  --lg-cursor-glow: rgba(100, 170, 255, 0.12);
+  --lg-depth-parallax: 0.015;
+  --lg-ripple-duration: 1s;
+
+  --background: oklch(0.96 0.008 250);
+  --foreground: oklch(0.15 0.02 250);
+  --card: rgba(255, 255, 255, 0.55);
+  --card-foreground: oklch(0.18 0.02 250);
+  --popover: rgba(255, 255, 255, 0.6);
+  --popover-foreground: oklch(0.18 0.02 250);
+  --primary: oklch(0.55 0.18 230);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: rgba(220, 230, 255, 0.5);
+  --secondary-foreground: oklch(0.25 0.02 250);
+  --muted: rgba(230, 238, 255, 0.5);
+  --muted-foreground: oklch(0.5 0.03 250);
+  --accent: rgba(120, 180, 255, 0.12);
+  --accent-foreground: oklch(0.25 0.02 250);
+  --destructive: oklch(0.55 0.22 25);
+  --border: rgba(180, 200, 230, 0.35);
+  --input: rgba(200, 215, 240, 0.4);
+  --ring: oklch(0.6 0.15 230);
+  --chart-1: oklch(0.55 0.2 230);
+  --chart-2: oklch(0.6 0.15 180);
+  --chart-3: oklch(0.65 0.12 280);
+  --chart-4: oklch(0.5 0.22 330);
+  --chart-5: oklch(0.7 0.15 60);
+  --sidebar: rgba(240, 245, 255, 0.6);
+  --sidebar-foreground: oklch(0.18 0.02 250);
+  --sidebar-primary: oklch(0.55 0.18 230);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: rgba(120, 180, 255, 0.1);
+  --sidebar-accent-foreground: oklch(0.25 0.02 250);
+  --sidebar-border: rgba(180, 200, 230, 0.3);
+  --sidebar-ring: oklch(0.6 0.15 230);
+
+  color-scheme: light;
+}
+
+/* --- Light Mode Ambient Background --- */
+.theme-liquid-glass.light .lg-bg-ambient {
+  background: radial-gradient(ellipse at 20% 50%, rgba(180, 210, 255, 0.35) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(200, 180, 255, 0.25) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(160, 220, 255, 0.3) 0%, transparent 55%),
+              linear-gradient(160deg, #f0f4ff 0%, #e8eeff 40%, #f2eeff 100%);
+}
+
+.theme-liquid-glass.light .lg-bg-nebula {
+  opacity: 0.5;
+  filter: blur(100px);
+}
+
+.theme-liquid-glass.light .lg-bg-nebula-1 {
+  background: radial-gradient(circle, rgba(120, 170, 255, 0.2), transparent 70%);
+}
+
+.theme-liquid-glass.light .lg-bg-nebula-2 {
+  background: radial-gradient(circle, rgba(180, 140, 255, 0.18), transparent 70%);
+}
+
+.theme-liquid-glass.light .lg-bg-nebula-3 {
+  background: radial-gradient(circle, rgba(100, 200, 240, 0.15), transparent 70%);
+}
+
+/* --- Light Mode Caustics --- */
+.theme-liquid-glass.light .lg-caustics {
+  opacity: 0.1;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(100, 160, 255, 0.25), transparent 50%),
+    radial-gradient(ellipse at 70% 60%, rgba(160, 120, 255, 0.18), transparent 40%),
+    radial-gradient(ellipse at 50% 90%, rgba(80, 200, 255, 0.2), transparent 45%);
+}
+
+/* --- Light Mode Particles --- */
+.theme-liquid-glass.light .lg-particle {
+  background: rgba(100, 160, 240, 0.5);
+  box-shadow: 0 0 3px rgba(100, 160, 240, 0.25);
+}
+
+/* --- Light Mode Cards --- */
+.theme-liquid-glass.light [data-slot="card"],
+.theme-liquid-glass.light .lg-glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.45) 40%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  border: 1px solid rgba(200, 215, 240, 0.5);
+  box-shadow:
+    0 8px 32px rgba(80, 120, 180, 0.08),
+    0 1px 3px rgba(80, 120, 180, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(200, 215, 240, 0.3);
+}
+
+.theme-liquid-glass.light [data-slot="card"]::before,
+.theme-liquid-glass.light .lg-glass-card::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  animation: lg-highlight-pulse 8s ease-in-out infinite;
+}
+
+.theme-liquid-glass.light [data-slot="card"]::after,
+.theme-liquid-glass.light .lg-glass-card::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 45%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.3) 55%,
+    transparent 100%
+  );
+  animation: lg-shimmer 10s ease-in-out infinite;
+}
+
+.theme-liquid-glass.light [data-slot="card"]:hover,
+.theme-liquid-glass.light .lg-glass-card:hover {
+  border-color: rgba(120, 180, 255, 0.4);
+  box-shadow:
+    0 12px 40px rgba(80, 120, 180, 0.12),
+    0 0 20px rgba(120, 180, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(200, 215, 240, 0.4);
+}
+
+/* --- Light Mode Buttons --- */
+.theme-liquid-glass.light [data-slot="button"],
+.theme-liquid-glass.light .lg-glass-btn {
+  background: linear-gradient(
+    135deg,
+    rgba(120, 180, 255, 0.25) 0%,
+    rgba(100, 160, 255, 0.15) 50%,
+    rgba(120, 180, 255, 0.2) 100%
+  );
+  border: 1px solid rgba(120, 180, 255, 0.3);
+  color: oklch(0.35 0.1 230);
+  box-shadow:
+    0 4px 16px rgba(80, 120, 180, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(180, 200, 240, 0.2);
+}
+
+.theme-liquid-glass.light [data-slot="button"]::before,
+.theme-liquid-glass.light .lg-glass-btn::before {
+  background: linear-gradient(
+    160deg,
+    rgba(200, 225, 255, 0.6) 0%,
+    transparent 35%,
+    transparent 65%,
+    rgba(180, 210, 255, 0.3) 100%
+  );
+}
+
+.theme-liquid-glass.light [data-slot="button"]::after,
+.theme-liquid-glass.light .lg-glass-btn::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+}
+
+.theme-liquid-glass.light [data-slot="button"]:hover::after,
+.theme-liquid-glass.light .lg-glass-btn:hover::after {
+  left: 120%;
+}
+
+.theme-liquid-glass.light [data-slot="button"]:hover,
+.theme-liquid-glass.light .lg-glass-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(120, 180, 255, 0.35) 0%,
+    rgba(100, 160, 255, 0.22) 50%,
+    rgba(120, 180, 255, 0.3) 100%
+  );
+  border-color: rgba(100, 160, 255, 0.45);
+  box-shadow:
+    0 6px 24px rgba(80, 120, 180, 0.15),
+    0 0 16px rgba(120, 180, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.theme-liquid-glass.light [data-slot="button"]:active,
+.theme-liquid-glass.light .lg-glass-btn:active {
+  box-shadow:
+    0 2px 8px rgba(80, 120, 180, 0.12),
+    inset 0 2px 4px rgba(80, 120, 180, 0.08);
+}
+
+/* --- Light Mode Inputs --- */
+.theme-liquid-glass.light [data-slot="input"],
+.theme-liquid-glass.light .lg-glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(180, 200, 230, 0.4);
+  color: oklch(0.2 0.02 250);
+  box-shadow:
+    inset 0 2px 6px rgba(80, 120, 180, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.theme-liquid-glass.light [data-slot="input"]:focus,
+.theme-liquid-glass.light .lg-glass-input:focus {
+  border-color: rgba(100, 160, 255, 0.4);
+  box-shadow:
+    inset 0 2px 6px rgba(80, 120, 180, 0.06),
+    0 0 12px rgba(100, 160, 255, 0.12),
+    0 0 4px rgba(100, 160, 255, 0.2);
+}
+
+/* --- Light Mode Dialog / Modal --- */
+.theme-liquid-glass.light [data-slot="dialog-overlay"] {
+  background: rgba(200, 210, 230, 0.4);
+  backdrop-filter: blur(8px) brightness(0.95);
+  -webkit-backdrop-filter: blur(8px) brightness(0.95);
+}
+
+.theme-liquid-glass.light [data-slot="dialog-content"] {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.65) 100%
+  );
+  border: 1px solid rgba(200, 215, 240, 0.5);
+  box-shadow:
+    0 20px 60px rgba(80, 120, 180, 0.15),
+    0 0 30px rgba(120, 180, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* --- Light Mode Popover --- */
+.theme-liquid-glass.light [data-slot="popover-content"] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  border: 1px solid rgba(200, 215, 240, 0.45);
+  box-shadow:
+    0 12px 40px rgba(80, 120, 180, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* --- Light Mode Progress Bar --- */
+.theme-liquid-glass.light [data-slot="progress-indicator"] {
+  background: linear-gradient(
+    90deg,
+    rgba(80, 150, 255, 0.5),
+    rgba(120, 180, 255, 0.7),
+    rgba(80, 150, 255, 0.5)
+  );
+  box-shadow: 0 0 10px rgba(100, 170, 255, 0.25);
+}
+
+.theme-liquid-glass.light [data-slot="progress-root"] {
+  background: rgba(200, 215, 240, 0.3);
+  box-shadow: inset 0 1px 2px rgba(80, 120, 180, 0.08);
+}
+
+/* --- Light Mode Cursor Glow --- */
+.theme-liquid-glass.light .lg-cursor-glow {
+  mix-blend-mode: multiply;
+}
+
+/* --- Light Mode Refraction --- */
+.theme-liquid-glass.light .lg-refraction-layer {
+  backdrop-filter: blur(0.2px) brightness(1.005);
+  -webkit-backdrop-filter: blur(0.2px) brightness(1.005);
+  mix-blend-mode: multiply;
+  opacity: 0.2;
+}
+
+/* --- Light Mode Chromatic Aberration --- */
+.theme-liquid-glass.light [data-slot="card"]:hover .lg-chromatic-edge,
+.theme-liquid-glass.light .lg-glass-card:hover .lg-chromatic-edge {
+  box-shadow:
+    calc(var(--lg-chromatic-shift) * -1) 0 0 rgba(255, 80, 80, 0.03),
+    var(--lg-chromatic-shift) 0 0 rgba(80, 80, 255, 0.03);
+}
+
 /* --- Liquid Glass Base Animations --- */
 @keyframes lg-caustic-drift {
   0%, 100% { background-position: 0% 50%; }
