@@ -11,7 +11,7 @@ import TrainingMode from '@/components/TrainingMode';
 import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
 import { loadScore, loadProgress, loadPosesFromStorage, LevelProgress } from '@/lib/gestureEngine';
-import ThemeToggle from '@/components/ThemeToggle';
+import { useTheme } from 'next-themes';
 
 export default function Home() {
   const [view, setView] = useState<AppView>('menu');
@@ -21,6 +21,8 @@ export default function Home() {
   const [savedPosesCount, setSavedPosesCount] = useState(0);
   const [levelProgressData, setLevelProgressData] = useState<LevelProgress[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Load data from localStorage only after mount (safe hydration pattern)
   useEffect(() => {
@@ -75,9 +77,94 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
           >
-            {/* Theme toggle */}
+            {/* Theme picker */}
             <div className="absolute top-4 right-4 z-50">
-              <ThemeToggle />
+              <div className="relative">
+                <button
+                  onClick={() => setShowThemePicker(!showThemePicker)}
+                  className="w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                  aria-label="Seleccionar tema"
+                >
+                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                </button>
+
+                <AnimatePresence>
+                  {showThemePicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+                    >
+                      <div className="p-3 border-b border-gray-100 dark:border-gray-700">
+                        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Seleccionar Tema</h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Elige la apariencia de la app</p>
+                      </div>
+                      <div className="p-3 grid grid-cols-2 gap-2.5">
+                        <button
+                          onClick={() => { setTheme('light'); setShowThemePicker(false); }}
+                          className={[
+                            'relative rounded-xl border-2 p-3 text-left transition-all hover:shadow-md',
+                            theme === 'light'
+                              ? 'border-orange-500 shadow-md shadow-orange-500/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300',
+                          ].join(' ')}
+                        >
+                          <div className="w-full h-14 rounded-lg bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 mb-2 overflow-hidden relative">
+                            <div className="absolute top-1 left-1 right-1 h-1.5 bg-white/80 rounded" />
+                            <div className="absolute bottom-1 left-1 w-5 h-3 bg-orange-400 rounded" />
+                            <div className="absolute bottom-1 left-7 w-3 h-3 bg-purple-400/30 rounded" />
+                          </div>
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Claro</p>
+                          <p className="text-[10px] text-muted-foreground">Predeterminado</p>
+                          {theme === 'light' && (
+                            <div className="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => { setTheme('dark'); setShowThemePicker(false); }}
+                          className={[
+                            'relative rounded-xl border-2 p-3 text-left transition-all hover:shadow-md',
+                            theme === 'dark'
+                              ? 'border-orange-500 shadow-md shadow-orange-500/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300',
+                          ].join(' ')}
+                        >
+                          <div className="w-full h-14 rounded-lg bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 mb-2 overflow-hidden relative">
+                            <div className="absolute top-1 left-1 right-1 h-1.5 bg-gray-800/80 rounded" />
+                            <div className="absolute bottom-1 left-1 w-5 h-3 bg-orange-500 rounded" />
+                            <div className="absolute bottom-1 left-7 w-3 h-3 bg-purple-500/40 rounded" />
+                          </div>
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Oscuro</p>
+                          <p className="text-[10px] text-muted-foreground">Predeterminado</p>
+                          {theme === 'dark' && (
+                            <div className="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {showThemePicker && (
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowThemePicker(false)}
+                  />
+                )}
+              </div>
             </div>
 
             <main className="flex-1 flex items-center justify-center px-4 py-12">
