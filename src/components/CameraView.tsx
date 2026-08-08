@@ -282,7 +282,7 @@ export default function CameraView({
 
       <canvas
         ref={canvasRef}
-        className={`absolute inset-0 w-full h-full rounded-2xl ${showCanvas ? '' : 'hidden'}`}
+        className={`relative w-full h-full rounded-2xl ${showCanvas ? '' : 'hidden'}`}
       />
 
       {isLoading && (
