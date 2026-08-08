@@ -39,7 +39,6 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [selectedLetter, setSelectedLetter] = useState('A');
   const [savedPoses, setSavedPoses] = useState<Record<string, SavedPose>>({});
   const [isCapturing, setIsCapturing] = useState(false);
-  const [captureCountdown, setCaptureCountdown] = useState<number | null>(null);
   const [isRecordingMovement, setIsRecordingMovement] = useState(false);
   const [recordedFrameCount, setRecordedFrameCount] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
@@ -50,7 +49,6 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const recordingRef = useRef<HandLandmark[][]>([]);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -104,21 +102,9 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
     successTimeoutRef.current = setTimeout(() => setShowSuccess(null), 2000);
   };
 
-  // Start countdown then capture
+  // Capture immediately (no countdown)
   const startCapture = () => {
-    setCaptureCountdown(3);
-    let count = 3;
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    countdownRef.current = setInterval(() => {
-      count--;
-      if (count <= 0) {
-        if (countdownRef.current) clearInterval(countdownRef.current);
-        setCaptureCountdown(null);
-        capturePose();
-      } else {
-        setCaptureCountdown(count);
-      }
-    }, 1000);
+    capturePose();
   };
 
   // Start recording movement (raw landmarks per frame)
@@ -278,22 +264,6 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
               showCanvas={true}
             />
 
-            {/* Countdown overlay */}
-            <AnimatePresence>
-              {captureCountdown !== null && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                >
-                  <div className="bg-black/50 backdrop-blur-sm rounded-full w-28 h-28 flex items-center justify-center">
-                    <span className="text-white text-5xl font-bold">{captureCountdown}</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Recording indicator */}
             {isRecordingMovement && (
               <div className="absolute top-3 right-3 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm rounded-full px-3 py-1.5">
@@ -333,14 +303,12 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
               {!isMovementLetter && (
                 <Button
                   onClick={startCapture}
-                  disabled={!cameraReady || !currentLandmarks.length || captureCountdown !== null}
+                  disabled={!cameraReady || !currentLandmarks.length}
                   className="flex-1 bg-purple-500 hover:bg-purple-600"
                 >
-                  {captureCountdown !== null
-                    ? `Capturando en ${captureCountdown}...`
-                    : currentLandmarks.length
-                      ? `Capturar muestra (${sampleCount + 1})`
-                      : 'Muestra tu mano'}
+                  {currentLandmarks.length
+                    ? `Capturar muestra (${sampleCount + 1})`
+                    : 'Muestra tu mano'}
                 </Button>
               )}
               {isMovementLetter && (
