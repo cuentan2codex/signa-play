@@ -255,9 +255,9 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 to-violet-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 to-violet-50 dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-purple-100">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button variant="ghost" onClick={onBack} className="gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

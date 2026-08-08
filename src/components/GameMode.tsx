@@ -253,9 +253,9 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-orange-100">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-orange-100 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button variant="ghost" onClick={onBack} className="gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -530,7 +530,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
               initial={{ scale: 0.8, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 20 }}
-              className="bg-white rounded-3xl p-8 max-w-md w-full text-center"
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full text-center"
             >
               <div className="text-6xl mb-4">🎉</div>
               <h2 className="text-2xl font-bold mb-2">¡Nivel Completado!</h2>

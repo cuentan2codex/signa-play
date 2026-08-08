@@ -11,6 +11,7 @@ import TrainingMode from '@/components/TrainingMode';
 import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
 import { loadScore, loadProgress, loadPosesFromStorage, LevelProgress } from '@/lib/gestureEngine';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Home() {
   const [view, setView] = useState<AppView>('menu');
@@ -54,7 +55,7 @@ export default function Home() {
   // Guard: don't render until client-side data is loaded
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent mx-auto mb-4" />
           <p className="text-muted-foreground">Cargando SeñaPlay...</p>
@@ -72,8 +73,13 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50"
+            className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
           >
+            {/* Theme toggle */}
+            <div className="absolute top-4 right-4 z-50">
+              <ThemeToggle />
+            </div>
+
             <main className="flex-1 flex items-center justify-center px-4 py-12">
               <div className="max-w-lg w-full text-center">
                 <motion.div
@@ -166,9 +172,9 @@ export default function Home() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50"
+            className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900"
           >
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-orange-100">
+            <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-orange-100 dark:border-gray-700">
               <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
                 <Button variant="ghost" onClick={() => setView('menu')} className="gap-2">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
