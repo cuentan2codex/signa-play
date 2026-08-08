@@ -282,7 +282,7 @@ export default function CameraView({
 
       <canvas
         ref={canvasRef}
-        className={`w-full h-full rounded-2xl ${showCanvas ? '' : 'hidden'}`}
+        className={`absolute inset-0 w-full h-full rounded-2xl ${showCanvas ? '' : 'hidden'}`}
       />
 
       {isLoading && (
@@ -322,8 +322,8 @@ export default function CameraView({
       {/* Toggle 21 hand landmarks */}
       {isLoaded && !error && (
         <button
-          onClick={() => setShowLandmarks((prev) => !prev)}
-          className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1.5 text-white text-xs font-medium hover:bg-black/70 transition-colors cursor-pointer select-none"
+          onClick={(e) => { e.stopPropagation(); setShowLandmarks((prev) => !prev); }}
+          className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all cursor-pointer select-none border border-white/10"
           title={showLandmarks ? 'Ocultar puntos de referencia' : 'Mostrar puntos de referencia'}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
