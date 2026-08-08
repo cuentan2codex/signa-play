@@ -12,6 +12,7 @@ import { AppView } from '@/lib/types';
 import { LEVELS } from '@/lib/gameData';
 import { loadScore, loadProgress, loadPosesFromStorage, LevelProgress } from '@/lib/gestureEngine';
 import { useTheme } from 'next-themes';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Home() {
   const [view, setView] = useState<AppView>('menu');
@@ -77,8 +78,9 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
           >
-            {/* Theme picker */}
-            <div className="absolute top-4 right-4 z-50">
+            {/* Top-right controls */}
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+              <ThemeToggle />
               <div className="relative">
                 <button
                   onClick={() => setShowThemePicker(!showThemePicker)}
@@ -100,59 +102,73 @@ export default function Home() {
                       className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
                     >
                       <div className="p-3 border-b border-gray-100 dark:border-gray-700">
-                        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Seleccionar Tema</h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Elige la apariencia de la app</p>
+                        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Temas</h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Elige un tema y su variante claro/oscuro</p>
                       </div>
-                      <div className="p-3 grid grid-cols-2 gap-2.5">
-                        <button
-                          onClick={() => { setTheme('light'); setShowThemePicker(false); }}
-                          className={[
-                            'relative rounded-xl border-2 p-3 text-left transition-all hover:shadow-md',
-                            theme === 'light'
-                              ? 'border-orange-500 shadow-md shadow-orange-500/20'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300',
-                          ].join(' ')}
-                        >
-                          <div className="w-full h-14 rounded-lg bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 mb-2 overflow-hidden relative">
-                            <div className="absolute top-1 left-1 right-1 h-1.5 bg-white/80 rounded" />
-                            <div className="absolute bottom-1 left-1 w-5 h-3 bg-orange-400 rounded" />
-                            <div className="absolute bottom-1 left-7 w-3 h-3 bg-purple-400/30 rounded" />
-                          </div>
-                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Claro</p>
-                          <p className="text-[10px] text-muted-foreground">Predeterminado</p>
-                          {theme === 'light' && (
-                            <div className="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                      <div className="p-3 space-y-2.5">
+                        {/* Tema Predeterminado */}
+                        <div className={[
+                          'rounded-xl border-2 p-3 transition-all',
+                          'border-orange-400 dark:border-orange-500 bg-orange-50/50 dark:bg-orange-950/20',
+                        ].join(' ')}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Predeterminado</p>
+                              <p className="text-[10px] text-muted-foreground">Tema original de SeñaPlay</p>
                             </div>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={() => { setTheme('dark'); setShowThemePicker(false); }}
-                          className={[
-                            'relative rounded-xl border-2 p-3 text-left transition-all hover:shadow-md',
-                            theme === 'dark'
-                              ? 'border-orange-500 shadow-md shadow-orange-500/20'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300',
-                          ].join(' ')}
-                        >
-                          <div className="w-full h-14 rounded-lg bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 mb-2 overflow-hidden relative">
-                            <div className="absolute top-1 left-1 right-1 h-1.5 bg-gray-800/80 rounded" />
-                            <div className="absolute bottom-1 left-1 w-5 h-3 bg-orange-500 rounded" />
-                            <div className="absolute bottom-1 left-7 w-3 h-3 bg-purple-500/40 rounded" />
-                          </div>
-                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Oscuro</p>
-                          <p className="text-[10px] text-muted-foreground">Predeterminado</p>
-                          {theme === 'dark' && (
-                            <div className="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-muted-foreground">
+                                {theme === 'dark' ? 'Oscuro' : 'Claro'}
+                              </span>
+                              <button
+                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
+                                style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#fbbf24' }}
+                                aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
+                              >
+                                <div
+                                  className="absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 flex items-center justify-center"
+                                  style={{
+                                    left: theme === 'dark' ? '1.375rem' : '0.125rem',
+                                    backgroundColor: theme === 'dark' ? '#cbd5e1' : '#fff',
+                                    boxShadow: theme === 'dark'
+                                      ? '0 0 6px 1px rgba(203,213,225,0.4)'
+                                      : '0 0 4px 1px rgba(251,191,36,0.5)',
+                                  }}
+                                >
+                                  {theme === 'light' && (
+                                    <svg className="w-2.5 h-2.5" style={{ color: '#f59e0b' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="12" cy="12" r="4" />
+                                    </svg>
+                                  )}
+                                  {theme === 'dark' && (
+                                    <svg className="w-2.5 h-2.5" style={{ color: '#334155' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </button>
                             </div>
-                          )}
-                        </button>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <div className={[
+                              'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                              theme === 'light'
+                                ? 'ring-2 ring-orange-400 ring-offset-1'
+                                : 'opacity-50',
+                            ].join(' ')}>
+                              <div className="w-full h-full bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50" />
+                            </div>
+                            <div className={[
+                              'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
+                              theme === 'dark'
+                                ? 'ring-2 ring-orange-500 ring-offset-1 ring-offset-gray-800'
+                                : 'opacity-50',
+                            ].join(' ')}>
+                              <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   )}
