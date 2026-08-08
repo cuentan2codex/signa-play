@@ -395,8 +395,11 @@ const STORAGE_KEY = 'sign-language-poses';
  * Migrate old pose format (features + single landmarks) to new format (samples array).
  */
 function migratePose(raw: any): SavedPose {
-  // Already new format
-  if (raw.samples && Array.isArray(raw.samples) && raw.samples.length > 0) {
+  // Already new format: has samples OR has movementSamples
+  if (
+    (raw.samples && Array.isArray(raw.samples) && raw.samples.length > 0) ||
+    (raw.movementSamples && Array.isArray(raw.movementSamples) && raw.movementSamples.length > 0)
+  ) {
     return raw as SavedPose;
   }
 
@@ -413,9 +416,6 @@ function migratePose(raw: any): SavedPose {
   if (raw.landmarks && Array.isArray(raw.landmarks) && raw.landmarks.length === 21) {
     pose.samples = [raw.landmarks];
   }
-
-  // Old format: movement frames were FeatureVector[], discard (need raw landmarks)
-  // User will need to re-record movement poses
 
   return pose;
 }
