@@ -286,7 +286,7 @@ export default function CameraView({
 
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-card rounded-2xl">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-sky-400 border-t-transparent mb-4" />
           <p className="text-sm text-muted-foreground animate-pulse">
             Cargando cámara y modelo de manos...
           </p>

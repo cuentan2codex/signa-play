@@ -253,9 +253,9 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-sky-100 dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-orange-100 dark:border-gray-700">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-sky-100 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button variant="ghost" onClick={onBack} className="gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,11 +264,11 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
             Volver
           </Button>
           <div className="flex items-center gap-3">
-            <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">
+            <div className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-semibold">
               Nivel {level.id}
             </div>
             <div className="flex items-center gap-1.5">
-              <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-sky-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
               <span className="font-bold text-lg">{score}</span>
@@ -336,7 +336,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
         {/* Right: Game panel */}
         <div className="lg:w-80 flex flex-col gap-4">
           {/* ====== REAL-TIME DETECTION PANEL ====== */}
-          <Card className="p-4 border-2 border-orange-200">
+          <Card className="p-4 border-2 border-sky-200">
             <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-bold">
               Detección en tiempo real
             </h4>
@@ -347,7 +347,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
                 <span className="text-xs text-muted-foreground">Letra objetivo</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-orange-400/30">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-500 to-sky-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-sky-400/30">
                   {currentLetter}
                 </div>
                 <div className="flex-1">
@@ -410,7 +410,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
 
             {/* Status message */}
             {!hasPosesForLetter(currentLetter) && (
-              <div className="mt-3 bg-amber-50 text-amber-700 rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+              <div className="mt-3 bg-sky-50 text-sky-700 rounded-lg px-3 py-2 text-xs flex items-center gap-2">
                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
                 </svg>
@@ -436,7 +436,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
           </Card>
 
           {/* Current word display */}
-          <Card className="p-5 bg-gradient-to-br from-orange-500 to-amber-500 text-white">
+          <Card className="p-5 bg-gradient-to-br from-sky-500 to-sky-500 text-white">
             <h3 className="text-xs uppercase tracking-wider opacity-80 mb-2">
               Seña esta palabra
             </h3>
@@ -454,7 +454,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
                     i < currentLetterIndex
                       ? 'bg-green-400 text-white shadow-lg shadow-green-400/30'
                       : i === currentLetterIndex
-                        ? 'bg-white text-orange-600 shadow-lg shadow-white/30 ring-4 ring-white/50'
+                        ? 'bg-white text-sky-600 shadow-lg shadow-white/30 ring-4 ring-white/50'
                         : 'bg-white/20 text-white/70'
                   }`}
                 >
@@ -480,7 +480,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
                 key={currentLetter}
                 initial={{ rotateY: -90, opacity: 0 }}
                 animate={{ rotateY: 0, opacity: 1 }}
-                className="inline-block bg-orange-100 text-orange-700 rounded-xl w-16 h-16 flex items-center justify-center text-3xl font-bold"
+                className="inline-block bg-sky-100 text-sky-700 rounded-xl w-16 h-16 flex items-center justify-center text-3xl font-bold"
               >
                 {currentLetter}
               </motion.div>
@@ -509,7 +509,7 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
                 <div className="text-xs text-muted-foreground">Completadas</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-orange-600">{level.words.length - completedWords.length}</div>
+                <div className="text-2xl font-bold text-sky-600">{level.words.length - completedWords.length}</div>
                 <div className="text-xs text-muted-foreground">Restantes</div>
               </div>
             </div>
@@ -537,15 +537,15 @@ export default function GameMode({ levelId, onBack, onLevelComplete }: GameModeP
               <p className="text-muted-foreground mb-6">
                 Completaste todas las palabras del nivel {level.id}
               </p>
-              <div className="bg-orange-50 rounded-xl p-4 mb-6">
-                <div className="text-3xl font-bold text-orange-600">{score}</div>
-                <div className="text-sm text-orange-600/70">Puntos obtenidos</div>
+              <div className="bg-sky-50 rounded-xl p-4 mb-6">
+                <div className="text-3xl font-bold text-sky-600">{score}</div>
+                <div className="text-sm text-sky-600/70">Puntos obtenidos</div>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={handleRestart} className="flex-1">
                   Repetir
                 </Button>
-                <Button onClick={onBack} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                <Button onClick={onBack} className="flex-1 bg-sky-500 hover:bg-sky-600">
                   Continuar
                 </Button>
               </div>

@@ -317,7 +317,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                             <button
                               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                               className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
-                              style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#fbbf24' }}
+                              style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#7dd3fc' }}
                               aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
                             >
                               <div
@@ -331,7 +331,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                                 }}
                               >
                                 {theme === 'light' && (
-                                  <svg className="w-2.5 h-2.5" style={{ color: '#f59e0b' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                  <svg className="w-2.5 h-2.5" style={{ color: '#0284c7' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="12" cy="12" r="4" />
                                   </svg>
                                 )}
@@ -351,7 +351,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                               ? 'ring-2 ring-purple-400 ring-offset-1'
                               : 'opacity-50',
                           ].join(' ')}>
-                            <div className="w-full h-full bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50" />
+                            <div className="w-full h-full bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50" />
                           </div>
                           <div className={[
                             'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
@@ -555,7 +555,7 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
                     </p>
                   )}
                   {sampleCount === 0 && (
-                    <p className="text-xs text-amber-600 mt-1">
+                    <p className="text-xs text-sky-600 mt-1">
                       Captura al menos una muestra para ver la coincidencia
                     </p>
                   )}
@@ -692,9 +692,9 @@ export default function TrainingMode({ onBack }: TrainingModeProps) {
           </Card>
 
           {/* Tips */}
-          <Card className="p-4 bg-amber-50 border-amber-200">
-            <h4 className="text-sm font-semibold text-amber-800 mb-2">Consejos</h4>
-            <ul className="text-xs text-amber-700 space-y-1.5">
+          <Card className="p-4 bg-sky-50 border-amber-200">
+            <h4 className="text-sm font-semibold text-sky-800 mb-2">Consejos</h4>
+            <ul className="text-xs text-sky-700 space-y-1.5">
               <li>• <strong>Captura varias muestras</strong> de la misma letra (3-5 recomendado)</li>
               <li>• Variá ligeramente la posición entre cada captura</li>
               <li>• Mantén la mano centrada en la cámara</li>

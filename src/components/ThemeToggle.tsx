@@ -16,7 +16,7 @@ export default function ThemeToggle() {
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className="relative w-14 h-7 rounded-full transition-colors duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      style={{ backgroundColor: isDark ? '#1e293b' : '#fbbf24' }}
+      style={{ backgroundColor: isDark ? '#1e293b' : '#7dd3fc' }}
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
     >
       {/* Stars (visible in dark mode) */}
@@ -53,7 +53,7 @@ export default function ThemeToggle() {
           backgroundColor: isDark ? '#cbd5e1' : '#fff',
           boxShadow: isDark
             ? '0 0 8px 2px rgba(203, 213, 225, 0.4)'
-            : '0 0 6px 2px rgba(251, 191, 36, 0.5)',
+            : '0 0 6px 2px rgba(56, 189, 248, 0.5)',
         }}
       >
         {/* Sun icon (visible in light mode) */}
@@ -62,7 +62,7 @@ export default function ThemeToggle() {
           style={{
             opacity: isDark ? 0 : 1,
             transform: isDark ? 'rotate(90deg) scale(0.5)' : 'rotate(0deg) scale(1)',
-            color: '#f59e0b',
+            color: '#0284c7',
           }}
           viewBox="0 0 24 24"
           fill="none"

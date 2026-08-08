@@ -58,9 +58,9 @@ export default function Home() {
   // Guard: don't render until client-side data is loaded
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-400 border-t-transparent mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-sky-400 border-t-transparent mx-auto mb-4" />
           <p className="text-muted-foreground">Cargando SeñaPlay...</p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
+            className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950"
           >
             {/* Top-right controls */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
@@ -109,7 +109,7 @@ export default function Home() {
                         {/* Tema Predeterminado */}
                         <div className={[
                           'rounded-xl border-2 p-3 transition-all',
-                          'border-orange-400 dark:border-orange-500 bg-orange-50/50 dark:bg-orange-950/20',
+                          'border-sky-400 dark:border-sky-500 bg-sky-50/50 dark:bg-orange-950/20',
                         ].join(' ')}>
                           <div className="flex items-center justify-between mb-2">
                             <div>
@@ -123,7 +123,7 @@ export default function Home() {
                               <button
                                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                                 className="relative w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none"
-                                style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#fbbf24' }}
+                                style={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#7dd3fc' }}
                                 aria-label={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
                               >
                                 <div
@@ -137,7 +137,7 @@ export default function Home() {
                                   }}
                                 >
                                   {theme === 'light' && (
-                                    <svg className="w-2.5 h-2.5" style={{ color: '#f59e0b' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                    <svg className="w-2.5 h-2.5" style={{ color: '#0284c7' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                                       <circle cx="12" cy="12" r="4" />
                                     </svg>
                                   )}
@@ -154,15 +154,15 @@ export default function Home() {
                             <div className={[
                               'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
                               theme === 'light'
-                                ? 'ring-2 ring-orange-400 ring-offset-1'
+                                ? 'ring-2 ring-sky-400 ring-offset-1'
                                 : 'opacity-50',
                             ].join(' ')}>
-                              <div className="w-full h-full bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50" />
+                              <div className="w-full h-full bg-gradient-to-br from-sky-50 via-sky-100 to-cyan-50" />
                             </div>
                             <div className={[
                               'flex-1 h-10 rounded-lg overflow-hidden relative transition-all',
                               theme === 'dark'
-                                ? 'ring-2 ring-orange-500 ring-offset-1 ring-offset-gray-800'
+                                ? 'ring-2 ring-sky-500 ring-offset-1 ring-offset-gray-800'
                                 : 'opacity-50',
                             ].join(' ')}>
                               <div className="w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
@@ -191,7 +191,7 @@ export default function Home() {
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                   className="mx-auto mb-8"
                 >
-                  <div className="w-28 h-28 bg-gradient-to-br from-orange-400 to-amber-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-400/30 mx-auto">
+                  <div className="w-28 h-28 bg-gradient-to-br from-sky-400 to-sky-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-sky-400/30 mx-auto">
                     <svg className="w-16 h-16 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3.15a3.15 3.15 0 106.3 0v-3.15M7.9 4.05a1.575 1.575 0 10-3.15 0 1.575 1.575 0 003.15 0M17.1 4.05a1.575 1.575 0 10-3.15 0 1.575 1.575 0 003.15 0M10.05 8.175a1.575 1.575 0 10-3.15 0 1.575 1.575 0 003.15 0M17.1 8.175a1.575 1.575 0 10-3.15 0 1.575 1.575 0 003.15 0" />
                     </svg>
@@ -202,7 +202,7 @@ export default function Home() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-3"
+                  className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-sky-600 to-sky-600 bg-clip-text text-transparent mb-3"
                 >
                   SeñaPlay
                 </motion.h1>
@@ -220,7 +220,7 @@ export default function Home() {
                   <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
                     <Button
                       onClick={() => setView('level-select')}
-                      className="w-full h-16 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 rounded-2xl gap-3"
+                      className="w-full h-16 text-lg bg-gradient-to-r from-sky-500 to-sky-500 hover:from-sky-600 hover:to-sky-600 shadow-lg shadow-sky-500/25 rounded-2xl gap-3"
                     >
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -252,7 +252,7 @@ export default function Home() {
                 >
                   <Card className="p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-sky-500" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                       </svg>
                       <span className="text-xs text-muted-foreground">Puntaje total</span>
@@ -275,9 +275,9 @@ export default function Home() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900"
+            className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-sky-100 dark:from-gray-950 dark:to-gray-900"
           >
-            <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-orange-100 dark:border-gray-700">
+            <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-sky-100 dark:border-gray-700">
               <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
                 <Button variant="ghost" onClick={() => setView('menu')} className="gap-2">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -287,7 +287,7 @@ export default function Home() {
                 </Button>
                 <h2 className="text-lg font-bold">Seleccionar Nivel</h2>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-sky-500" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   <span className="font-bold">{totalScore}</span>
@@ -313,7 +313,7 @@ export default function Home() {
                       <Card
                         className={`p-6 transition-all hover:shadow-lg ${
                           isUnlocked
-                            ? 'cursor-pointer hover:border-orange-300 bg-white'
+                            ? 'cursor-pointer hover:border-sky-300 bg-white'
                             : 'opacity-60 cursor-not-allowed bg-muted/50'
                         }`}
                         onClick={() => {
@@ -328,7 +328,7 @@ export default function Home() {
                             <div
                               className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${
                                 isUnlocked
-                                  ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white'
+                                  ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-white'
                                   : 'bg-muted text-muted-foreground'
                               }`}
                             >
@@ -344,7 +344,7 @@ export default function Home() {
                             </div>
                           </div>
                           {isUnlocked && (
-                            <Badge variant="outline" className="border-orange-200 text-orange-700">
+                            <Badge variant="outline" className="border-sky-200 text-sky-700">
                               {level.words.length} palabras
                             </Badge>
                           )}
